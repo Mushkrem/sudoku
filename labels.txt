@@ -1,0 +1,4 @@
+main:0001
+settings:0010
+leaderboards:0100
+game:1000
