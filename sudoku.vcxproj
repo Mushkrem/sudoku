@@ -127,10 +127,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="input.c" />
+    <ClCompile Include="screen.c" />
     <ClCompile Include="sudoku.c" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="labels.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="input.h" />
+    <ClInclude Include="screen.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
