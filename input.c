@@ -11,7 +11,6 @@ DWORD WINAPI listen_impl(LPVOID lp) {
         printf("%c", c);
     }
 
-    printf("Success!\n");
     return 0;
 }
 
