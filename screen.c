@@ -15,8 +15,8 @@ int go_to(COORD c) {
 int update_impl() {
 	_menu* menu = get_menu_instance();
 	while (TRUE) {
-		system("cls");
-		go_to((COORD) { 0, 0 });
+		//system("cls");
+		//go_to((COORD) { 0, 0 });
 	}
 	return EXIT_SUCCESS;
 }

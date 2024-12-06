@@ -4,6 +4,7 @@
 #include <windows.h>
 
 #include "utils.h"
+#include "interface.h"
 
 static _menu* instance = NULL;
 
@@ -16,11 +17,13 @@ int m_select_impl(int n) {
 		return EXIT_FAILURE;
 
 	menu->position = n;
-	Utils.Debug(L"New menu selected value = %d", n);
+	menu->update();
 	return EXIT_SUCCESS;
 }
 
 int m_update_impl() {
+	_menu* menu = get_menu_instance();
+	Interface.draw_text((COORD) { 2, 2 }, L"The selected value is: %d", instance->position);
 	return EXIT_SUCCESS;
 }
 
@@ -29,10 +32,8 @@ _menu* get_menu_instance() {
 		return instance;
 
 	instance = (_menu*)malloc(sizeof(_menu));
-	if (instance == NULL) {
-		printf("Error allocating memory for menu instance.\n");
+	if (instance == NULL)
 		exit(EXIT_FAILURE);
-	}
 
 	instance->position = 0;
 	instance->labels = NULL;

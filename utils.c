@@ -1,8 +1,7 @@
 #include "utils.h"
-#include <stdio.h>
 
-void OutputFormattedDebugString(const wchar_t* format, ...) {
-	wchar_t buffer[256];
+void output_formatted_debug(const wchar_t* format, ...) {
+	wchar_t buffer[2048];
 	va_list args;
 	va_start(args, format);
 	vswprintf(buffer, sizeof(buffer) / sizeof(wchar_t), format, args);
@@ -12,6 +11,21 @@ void OutputFormattedDebugString(const wchar_t* format, ...) {
 	OutputDebugString(buffer);
 }
 
+void write_to_buffer(wchar_t* buffer, size_t size, const wchar_t* format, va_list args) {
+	int length = vswprintf(buffer, size, format, args);
+}
+
+void write_to_console(const wchar_t* buffer, COORD position) {
+	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleCursorPosition(h, position);
+	DWORD c_written; 
+	if (h != INVALID_HANDLE_VALUE) { 
+		WriteConsoleW(h, buffer, wcslen(buffer), &c_written, NULL); 
+	}
+}
+
 Utility Utils = {
-	.Debug = OutputFormattedDebugString
+	.Debug = output_formatted_debug,
+	.Write = write_to_buffer,
+	.Print = write_to_console
 };
