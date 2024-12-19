@@ -18,6 +18,24 @@ static DWORD WINAPI listen_impl(LPVOID lp) {
 
         if(iswdigit(c)) // isdigit threw exceptions in some cases
             screen.select(c - '0');
+           
+        switch ((int)c) {
+            case 72: // up
+                screen.select(screen.menu->position - 1);
+                break;
+            case 80: // down
+                screen.select(screen.menu->position + 1);
+                break;
+            case 77: // right
+                break;
+            case 75: // left
+                break;
+            case 13: // enter
+                screen.confirm();
+                break;
+            default:
+                break;
+        }
     }
 
     return 0;

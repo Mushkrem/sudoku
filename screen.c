@@ -1,39 +1,51 @@
 #pragma once
 
 #include "screen.h"
+#include "utils.h"
 
 #define CLEAR "\x1B[2J\x1B[H"
 
-_menu* get_menu_instance(void);
+_menu* get_menu_instance(int w);
+int width;
 
-int go_to(COORD c) {
-	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-	SetConsoleCursorPosition(h, (COORD){ c.X, c.Y });
-	return EXIT_SUCCESS;
+void s_init() {
+	width = Utils.GetConsoleWidth();
+	printf("\33[?25l"); // Hide cursor
 }
 
 int update_impl() {
-	_menu* menu = get_menu_instance();
+	_menu* menu = get_menu_instance(width);
 	while (TRUE) {
-		//system("cls");
-		//go_to((COORD) { 0, 0 });
+		if (width != Utils.GetConsoleWidth()) {
+			system("cls");
+		}
+		Sleep(1);
+		//
 	}
 	return EXIT_SUCCESS;
 }
 
 int select_impl(int n) {
-	_menu* menu = get_menu_instance();
+	_menu* menu = get_menu_instance(NULL);
 	menu->select(n);
 
 	return EXIT_SUCCESS;
 }
 
+int confirm_impl() {
+	return EXIT_SUCCESS;
+}
+
 SCREEN get_screen() {
 	SCREEN screen;
+
+	s_init();
+
 	screen.update = update_impl;
 	screen.select = select_impl;
+	screen.confirm = confirm_impl;
 
-	screen.menu = get_menu_instance();
+	screen.menu = get_menu_instance(NULL);
 	
 	return screen;
 }

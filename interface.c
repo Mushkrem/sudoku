@@ -14,6 +14,8 @@ void draw_text_impl(COORD position, const wchar_t* text, ...) {
 	Utils.Write(&buffer, sizeof(buffer), text, args);
 	va_end(args);
 
+	Utils.Append(&buffer, sizeof(buffer), L"\033[0m"); // reset any formatting
+
 	Utils.Print(buffer, position);
 }
 

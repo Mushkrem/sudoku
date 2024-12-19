@@ -1,18 +1,22 @@
 #include "utils.h"
 
-void output_formatted_debug(const wchar_t* format, ...) {
-	wchar_t buffer[2048];
-	va_list args;
-	va_start(args, format);
-	vswprintf(buffer, sizeof(buffer) / sizeof(wchar_t), format, args);
-	va_end(args);
-
-	wcscat_s(buffer, sizeof(buffer) / sizeof(wchar_t), L"\n");
-	OutputDebugString(buffer);
+void append_to_buffer(wchar_t* buffer, size_t size, const wchar_t* string) {
+	wcscat_s(buffer, size / sizeof(wchar_t), string);
 }
 
-void write_to_buffer(wchar_t* buffer, size_t size, const wchar_t* format, va_list args) {
-	int length = vswprintf(buffer, size, format, args);
+void write_to_buffer(wchar_t* buffer, size_t size, const wchar_t* string, va_list args) {
+	vswprintf(buffer, size, string, args);
+}
+
+void output_formatted_debug(const wchar_t* string, ...) {
+	wchar_t buffer[2048];
+	va_list args;
+	va_start(args, string);
+	vswprintf(buffer, sizeof(buffer) / sizeof(wchar_t), string, args);
+	va_end(args);
+
+	append_to_buffer(buffer, sizeof(buffer), L"\n");
+	OutputDebugString(buffer);
 }
 
 void write_to_console(const wchar_t* buffer, COORD position) {
@@ -24,8 +28,20 @@ void write_to_console(const wchar_t* buffer, COORD position) {
 	}
 }
 
+int get_console_width() {
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	int width;
+
+	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+	width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+
+	return width;
+}
+
 Utility Utils = {
 	.Debug = output_formatted_debug,
 	.Write = write_to_buffer,
-	.Print = write_to_console
+	.Print = write_to_console,
+	.Append = append_to_buffer,
+	.GetConsoleWidth = get_console_width
 };
