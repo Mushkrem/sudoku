@@ -38,10 +38,21 @@ int get_console_width() {
 	return width;
 }
 
+int get_console_height() {
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	int height;
+
+	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+	height = csbi.srWindow.Bottom - csbi.srWindow.Top;
+
+	return height;
+}
+
 Utility Utils = {
 	.Debug = output_formatted_debug,
 	.Write = write_to_buffer,
 	.Print = write_to_console,
 	.Append = append_to_buffer,
-	.GetConsoleWidth = get_console_width
+	.GetConsoleWidth = get_console_width,
+	.GetConsoleHeight = get_console_height
 };

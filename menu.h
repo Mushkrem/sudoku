@@ -9,4 +9,5 @@ typedef struct _menu {
     int visible;
     int (*update)();
     int (*select)();
+    int (*confirm)();
 } _menu;

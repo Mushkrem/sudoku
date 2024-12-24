@@ -4,6 +4,10 @@
 
 #include "menu.h"
 
+typedef struct {
+    int width, height;
+} _bounds;
+
 typedef struct _screen {
     int (*update)();
     int (*confirm)();
