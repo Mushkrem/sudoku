@@ -23,7 +23,7 @@ void m_draw_buttons() {
 		wchar_t* higher_intensity = L"\033[1m";
 		if (instance->position != i + 1) // sets the text to a higher intensity if its the selected one
 			higher_intensity = L"";
-		Interface.draw_text((COORD) { bounds.width / 2 - wcslen(buttons[i]) / 2, (bounds.height / 2 )- 2 /* should be 2/x where x is the no. of buttons but that doesnt work? */ + i * 2 }, L"%s%s", higher_intensity, buttons[i]);
+		Interface.draw_text((COORD) { bounds.width / 2 - wcslen(buttons[i]) / 2, (bounds.height / 2 )- 2 /* should be round(x/2) where x is the no. of buttons but that doesnt work? */ + i * 2 }, L"%s%s", higher_intensity, buttons[i]);
 	}
 }
 
