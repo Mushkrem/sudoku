@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
     
     _global global;
     _game game;
-
+    Utils.Print(L"┌─────────┬─────────┬────────┐", (COORD) { 0, 12 });
     game.global_ref = &global;
 
     // Creating parallel threads

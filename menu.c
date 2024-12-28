@@ -84,7 +84,7 @@ int m_update_impl() {
 	// should make an external function to draw the cursor (changing its visuals depending on where in the menu tree/game you are)
 	//(bounds.height / 2) - ceil(2 / button_count) + i * 2
 	Interface.draw_text((COORD) { bounds.width / 2 + wcslen(buttons[p-1]), (bounds.height / 2) - 4 + (p) * 2 }, L" ");	// Why is this 4
-	Interface.draw_text((COORD) { bounds.width / 2 + wcslen(buttons[n-1]), (bounds.height / 2) - 4 + (n) * 2 }, L"\033[6m\033[94m◀");
+	Interface.draw_text((COORD) { bounds.width / 2 + wcslen(buttons[n-1]), (bounds.height / 2) - 4 + (n) * 2 }, L"\033[6m\033[94m\u25C0"); //u140A doesnt work on legacy, why???
 
 	m_draw_buttons();
 

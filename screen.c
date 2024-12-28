@@ -10,9 +10,18 @@ _menu* get_menu_instance(_bounds bounds);
 _bounds bounds;
 
 void s_init() {
+	printf("\33[?25l"); // Hide cursor
+
+	// Disable legacy console mode (so the ansi escape characters work)
+	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+	DWORD dw = 0;
+	GetConsoleMode(h, &dw);
+	dw |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+	SetConsoleMode(h, dw);
+	//
+
 	bounds.width = Utils.GetConsoleWidth();
 	bounds.height = Utils.GetConsoleHeight();
-	printf("\33[?25l"); // Hide cursor
 }
 
 int update_impl() {
