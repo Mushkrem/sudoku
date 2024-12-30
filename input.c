@@ -5,33 +5,34 @@
 
 #include "utils.h"
 
+SCREEN* get_screen();
+
 static DWORD WINAPI listen_impl(LPVOID lp) {
     int* number = (int*)lp;
     char c;
     int d;
 
-    SCREEN screen;
-    screen = get_screen();
+    SCREEN *screen = get_screen();
 
     while (TRUE) {
         c = _getch();
 
-        if(iswdigit(c)) // isdigit threw exceptions in some cases
-            screen.select(c - '0');
+        if (iswdigit(c)) // isdigit threw exceptions in some cases
+            screen->select(c - '0');
            
         switch ((int)c) {
             case 72: // up
-                screen.select(screen.menu->position - 1);
+                screen->select(screen->menu->position - 1);
                 break;
             case 80: // down
-                screen.select(screen.menu->position + 1);
+                screen->select(screen->menu->position + 1);
                 break;
             case 77: // right
                 break;
             case 75: // left
                 break;
             case 13: // enter
-                screen.confirm();
+                screen->confirm();
                 break;
             default:
                 break;

@@ -20,12 +20,26 @@ void output_formatted_debug(const wchar_t* string, ...) {
 }
 
 void write_to_console(const wchar_t* buffer, COORD position) {
-	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-	SetConsoleCursorPosition(h, position);
+	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleCursorPosition(handle, position);
 	DWORD c_written; 
-	if (h != INVALID_HANDLE_VALUE) { 
-		WriteConsoleW(h, buffer, wcslen(buffer), &c_written, NULL); 
+	if (handle != INVALID_HANDLE_VALUE) {
+		WriteConsoleW(handle, buffer, wcslen(buffer), &c_written, NULL);
 	}
+}
+
+char get_character_at_position(COORD pos) {
+	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	CHAR_INFO screen_buffer[1];
+
+	COORD buffer_size = { 1, 1 };
+	COORD buffer_coord = { 0, 0 };
+	SMALL_RECT read_region = { pos.X, pos.Y, pos.X, pos.Y };
+
+	int found = ReadConsoleOutput(handle, screen_buffer, buffer_size, buffer_coord, &read_region);
+
+	if (found) return screen_buffer->Char.AsciiChar;
+	return EXIT_FAILURE;
 }
 
 int get_console_width() {
@@ -53,6 +67,7 @@ Utility Utils = {
 	.Write = write_to_buffer,
 	.Print = write_to_console,
 	.Append = append_to_buffer,
+	.GetCharacterAt = get_character_at_position,
 	.GetConsoleWidth = get_console_width,
 	.GetConsoleHeight = get_console_height
 };

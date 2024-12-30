@@ -3,15 +3,25 @@
 #include "screen.h"
 #include "utils.h"
 
+#include "interface.h"
+
 #define CLEAR "\x1B[2J\x1B[H"
 #define DEFAULT_BOUNDS (_bounds){0, 0}
 
 _menu* get_menu_instance(_bounds bounds);
 _bounds bounds;
 
-void s_init() {
-	printf("\33[?25l"); // Hide cursor
+static SCREEN* instance = NULL;
 
+int is_legacy_console() {
+	if (Utils.GetCharacterAt((COORD) { 0, 0 }) == 32) {
+		Utils.Debug(L"Omg!!!");
+	}
+}
+
+void s_init() {
+	printf("\33[?25l");
+	is_legacy_console();
 	// Disable legacy console mode (so the ansi escape characters work)
 	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
 	DWORD dw = 0;
@@ -49,16 +59,35 @@ int confirm_impl() {
 	return EXIT_SUCCESS;
 }
 
-SCREEN get_screen() {
-	SCREEN screen;
+SCREEN* get_screen() {
+	if (instance != NULL)
+		return instance;
+
+	instance = (SCREEN*)malloc(sizeof(SCREEN));
+	if (instance == NULL)
+		exit(EXIT_FAILURE);
 
 	s_init();
 
-	screen.update = update_impl;
-	screen.select = select_impl;
-	screen.confirm = confirm_impl;
+	instance->update = update_impl;
+	instance->select = select_impl;
+	instance->confirm = confirm_impl;
 
-	screen.menu = get_menu_instance(DEFAULT_BOUNDS);
-	
-	return screen;
+	instance->menu = get_menu_instance(DEFAULT_BOUNDS);
+
+	return instance;
 }
+
+//SCREEN get_screen() {
+//	SCREEN screen;
+//
+//	s_init();
+//
+//	screen.update = update_impl;
+//	screen.select = select_impl;
+//	screen.confirm = confirm_impl;
+//
+//	screen.menu = get_menu_instance(DEFAULT_BOUNDS);
+//	
+//	return screen;
+//}

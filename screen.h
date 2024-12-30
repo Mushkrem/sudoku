@@ -13,7 +13,6 @@ typedef struct _screen {
     int (*confirm)();
     int (*select)(int n);
     _menu *menu;
-    int width;
 } SCREEN;
 
-SCREEN get_screen();
+//SCREEN get_screen();
