@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "screen.h"
 #include "utils.h"
@@ -8,27 +8,40 @@
 #define CLEAR "\x1B[2J\x1B[H"
 #define DEFAULT_BOUNDS (_bounds){0, 0}
 
-_menu* get_menu_instance(_bounds bounds);
-_bounds bounds;
+static _screen* instance = NULL;
 
-static SCREEN* instance = NULL;
+_menu* get_menu_instance(_bounds bounds);
+_screen* get_screen_instance();
+
+_bounds bounds;
+int _is_legacy = NULL;
+
 
 int is_legacy_console() {
-	if (Utils.GetCharacterAt((COORD) { 0, 0 }) == 32) {
-		Utils.Debug(L"Omg!!!");
+	if (_is_legacy != NULL) return _is_legacy;
+
+	if (Utils.GetCharacterAt((COORD) { 0, 0 }) != 32) { // At 0, 0 is the ansi code for hiding the cursor, which is later replaced with '32' in modern terminals
+		_is_legacy = 1;									// but for some reason is not in the legacy ones(or one, because that's how it works for me at least)
 	}
+	else _is_legacy = 0;
+
+	return _is_legacy;
 }
 
 void s_init() {
-	printf("\33[?25l");
-	is_legacy_console();
-	// Disable legacy console mode (so the ansi escape characters work)
+	printf("\033[?25l"); // Hide the cursor → it is later used to check whether the console is legacy or not (as legacy won't recognize the character)
+
+	// Disable legacy console mode (so the ansi escape characters work) // Well it works only partially - changing code pages doesn't seem to work either
 	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
 	DWORD dw = 0;
 	GetConsoleMode(h, &dw);
 	dw |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 	SetConsoleMode(h, dw);
-	//
+
+	if (is_legacy_console()) {
+		printf("\033[?25l"); // After turning ENABLE_VIRTUAL_TERMINAL_PROCESSING the character should now work
+		Interface.draw_text((COORD) { 0, 0 }, L"\033[7mlegacy mode");
+	}
 
 	bounds.width = Utils.GetConsoleWidth();
 	bounds.height = Utils.GetConsoleHeight();
@@ -47,6 +60,8 @@ int update_impl() {
 }
 
 int select_impl(int n) {
+	Utils.Debug(L"!>>%d → %d", _is_legacy, n);
+
 	_menu* menu = get_menu_instance(DEFAULT_BOUNDS);
 	menu->select(n);
 
@@ -59,35 +74,19 @@ int confirm_impl() {
 	return EXIT_SUCCESS;
 }
 
-SCREEN* get_screen() {
+_screen* get_screen_instance() {
 	if (instance != NULL)
 		return instance;
 
-	instance = (SCREEN*)malloc(sizeof(SCREEN));
+	instance = (_screen*)malloc(sizeof(_screen));
 	if (instance == NULL)
 		exit(EXIT_FAILURE);
 
 	s_init();
-
 	instance->update = update_impl;
 	instance->select = select_impl;
 	instance->confirm = confirm_impl;
-
+	instance->is_legacy = is_legacy_console;
 	instance->menu = get_menu_instance(DEFAULT_BOUNDS);
-
 	return instance;
 }
-
-//SCREEN get_screen() {
-//	SCREEN screen;
-//
-//	s_init();
-//
-//	screen.update = update_impl;
-//	screen.select = select_impl;
-//	screen.confirm = confirm_impl;
-//
-//	screen.menu = get_menu_instance(DEFAULT_BOUNDS);
-//	
-//	return screen;
-//}

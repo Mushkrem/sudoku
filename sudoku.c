@@ -25,12 +25,12 @@ typedef struct _game {
 //  ├─────────┼─────────┼────────┤
 //  └─────────┴─────────┴────────┘
 
-SCREEN* get_screen();
+_screen* get_screen_instance();
 
 int main(int argc, char* argv[]) {
     // Initializing input and screen loop functions
     INPUTS input = get_inputs();
-    SCREEN* screen = get_screen();
+    _screen* screen = get_screen_instance();
     
     _global global;
     _game game;
@@ -51,7 +51,9 @@ int main(int argc, char* argv[]) {
 
     // Initialize the menu
 
-    screen->menu->select(1);
+    //screen->menu->select(1);
+    screen->select(1);
+
 
     WaitForSingleObject(listen_t, INFINITE);
     

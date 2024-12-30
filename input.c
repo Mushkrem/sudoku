@@ -5,14 +5,14 @@
 
 #include "utils.h"
 
-SCREEN* get_screen();
+_screen* get_screen_instance();
 
 static DWORD WINAPI listen_impl(LPVOID lp) {
     int* number = (int*)lp;
     char c;
     int d;
 
-    SCREEN *screen = get_screen();
+    _screen*screen = get_screen_instance();
 
     while (TRUE) {
         c = _getch();

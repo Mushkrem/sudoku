@@ -12,7 +12,7 @@ typedef struct _screen {
     int (*update)();
     int (*confirm)();
     int (*select)(int n);
+    int (*is_legacy)();
+    int _is_legacy;
     _menu *menu;
-} SCREEN;
-
-//SCREEN get_screen();
+} _screen;
