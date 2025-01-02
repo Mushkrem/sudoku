@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
     
     _global global;
     _game game;
-    Utils.Print(L"┌─────────┬─────────┬────────┐", (COORD) { 0, 12 });
+    //Utils.Print(L"┌─────────┬─────────┬────────┐", (COORD) { 0, 12 });
     game.global_ref = &global;
 
     // Creating parallel threads
@@ -51,9 +51,7 @@ int main(int argc, char* argv[]) {
 
     // Initialize the menu
 
-    //screen->menu->select(1);
     screen->select(1);
-
 
     WaitForSingleObject(listen_t, INFINITE);
     

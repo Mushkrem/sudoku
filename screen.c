@@ -15,7 +15,15 @@ _screen* get_screen_instance();
 
 _bounds bounds;
 int _is_legacy = NULL;
+int _theme = 4;
 
+int get_theme() {
+	return _theme;
+}
+
+int set_theme(int n) {
+	_theme = n;
+}
 
 int is_legacy_console() {
 	if (_is_legacy != NULL) return _is_legacy;
@@ -47,31 +55,43 @@ void s_init() {
 	bounds.height = Utils.GetConsoleHeight();
 }
 
+void clear_console() {
+	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	DWORD count;
+	DWORD cell_count;
+	COORD write_coords = { 0, 0 };
+
+	if (!GetConsoleScreenBufferInfo(handle, &csbi)) return;
+	cell_count = csbi.dwSize.X * csbi.dwSize.Y;
+
+	if (!FillConsoleOutputCharacter(handle, (TCHAR)' ', cell_count, write_coords, &count)) return;
+
+	if (!FillConsoleOutputAttribute(handle, csbi.wAttributes, cell_count, write_coords, &count)) return;
+
+	SetConsoleCursorPosition(handle, write_coords);
+}
+
 int update_impl() {
 	_menu* menu = get_menu_instance(bounds);
 	while (TRUE) {
 		if (bounds.width != Utils.GetConsoleWidth()) {
 			system("cls");
 		}
+		//menu->update(); //was a futile dream
 		Sleep(1);
-		//
 	}
 	return EXIT_SUCCESS;
 }
 
 int select_impl(int n) {
-	Utils.Debug(L"!>>%d → %d", _is_legacy, n);
-
 	_menu* menu = get_menu_instance(DEFAULT_BOUNDS);
-	menu->select(n);
-
-	return EXIT_SUCCESS;
+	return menu->select(n);
 }
 
 int confirm_impl() {
 	_menu* menu = get_menu_instance(DEFAULT_BOUNDS);
-	menu->confirm();
-	return EXIT_SUCCESS;
+	return menu->confirm();
 }
 
 _screen* get_screen_instance() {
@@ -87,6 +107,8 @@ _screen* get_screen_instance() {
 	instance->select = select_impl;
 	instance->confirm = confirm_impl;
 	instance->is_legacy = is_legacy_console;
+	instance->get_theme = get_theme;
+	instance->set_theme = set_theme;
 	instance->menu = get_menu_instance(DEFAULT_BOUNDS);
 	return instance;
 }

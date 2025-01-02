@@ -5,7 +5,14 @@ void append_to_buffer(wchar_t* buffer, size_t size, const wchar_t* string) {
 }
 
 void write_to_buffer(wchar_t* buffer, size_t size, const wchar_t* string, va_list args) {
-	vswprintf(buffer, size, string, args);
+	vswprintf(buffer, size / sizeof(wchar_t), string, args);
+}
+
+void write_to_buffer_literally(wchar_t* buffer, size_t size, const wchar_t* string, ...) {
+	va_list args;
+	va_start(args, string);
+	write_to_buffer(buffer, size / sizeof(wchar_t), string, args);
+	va_end(args);
 }
 
 void output_formatted_debug(const wchar_t* string, ...) {
@@ -65,6 +72,7 @@ int get_console_height() {
 Utility Utils = {
 	.Debug = output_formatted_debug,
 	.Write = write_to_buffer,
+	.WriteLiteral = write_to_buffer_literally,
 	.Print = write_to_console,
 	.Append = append_to_buffer,
 	.GetCharacterAt = get_character_at_position,

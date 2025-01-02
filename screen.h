@@ -13,6 +13,8 @@ typedef struct _screen {
     int (*confirm)();
     int (*select)(int n);
     int (*is_legacy)();
+    int (*get_theme)();
+    int (*set_theme)(int n);
     int _is_legacy;
     _menu *menu;
 } _screen;

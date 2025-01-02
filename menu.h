@@ -6,7 +6,7 @@ typedef struct _menu {
     unsigned char position;
     unsigned char previous_position;
     _label** labels;
-    int visible;
+    int theme;
     int (*update)();
     int (*select)();
     int (*confirm)();

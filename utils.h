@@ -7,7 +7,8 @@
 
 typedef struct {
 	void (*Debug)(const wchar_t* string, ...);
-	void (*Write)(wchar_t* buffer, size_t size, const wchar_t* string, ...);
+	void (*Write)(wchar_t* buffer, size_t size, const wchar_t* string, va_list args);
+	void (*WriteLiteral)(wchar_t* buffer, size_t size, const wchar_t* string, ...);
 	void (*Append)(wchar_t* buffer, size_t size, const wchar_t* string);
 	void (*Print)(wchar_t* buffer, COORD position);
 	char (*GetCharacterAt)(COORD position);

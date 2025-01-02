@@ -6,7 +6,6 @@
 
 #include "utils.h"
 #include "interface.h"
-#include "screen.h"
 
 #define Y_OFFSET 4
 #define DEFAULT_BOUNDS (_bounds){0, 0}
@@ -19,22 +18,15 @@ _menu* get_menu_instance(_bounds bounds);
 _screen* get_screen_instance();
 
 _bounds bounds;
-const wchar_t* buttons[16];
+const wchar_t* buttons[10];
 int button_count = 0;
 
-void m_draw_buttons() {
-	for (int i = 0; i < 3; i++) {
-		wchar_t* higher_intensity = L"\033[1m";
-		if (instance->position != i + 1) // sets the text to a higher intensity if its the selected one
-			higher_intensity = L"";
-		Interface.draw_text((COORD) { bounds.width / 2 - wcslen(buttons[i]) / 2, (bounds.height / 2 )- 2 /* should be round(x/2) where x is the no. of buttons but that doesnt work? */ + i * 2 }, L"%s%s", higher_intensity, buttons[i]);
+void m_init(int reset) {
+	if (reset) {
+		instance->position = -1;
+		instance->previous_position = -1;
+		instance->labels = NULL;
 	}
-}
-
-void m_init() {
-	instance->position = 2;
-	instance->previous_position = NULL;
-	instance->labels = NULL;
 
 	buttons[0] = L"Play";
 	buttons[1] = L"Options";
@@ -42,12 +34,24 @@ void m_init() {
 
 	button_count = 3;
 
-	m_draw_buttons();
+	if (!reset) instance->position = button_count;
 
 	Interface.draw_text((COORD) { bounds.width /2 - 6, Y_OFFSET - 2 }, L"\033[7m\033[94m S U D O K U \033[0m");
+}
 
-	Utils.Debug(L"Width: %d Height:%d", bounds.width, bounds.height);
-	//Interface.draw_text((COORD) {bounds.width / 2 - 3, bounds.height / 2 }, L"CENTER");
+int m_roll_impl(int n) {
+	_menu* menu = get_menu_instance(DEFAULT_BOUNDS);
+	int direction = 0;
+	int p = menu->position;
+
+	if (n - p == 0xA) direction = 1;
+	if (n - p == 0xF) direction = -1;
+
+	if (direction == 0) return !EXIT_FAILURE;
+
+	Utils.Debug(L"rolling..");
+
+	return EXIT_SUCCESS;
 }
 
 int m_select_impl(int n) {
@@ -59,8 +63,21 @@ int m_select_impl(int n) {
 	if (n <= 0)
 		return EXIT_FAILURE;
 
+	if (n - p > 1) { // Left-right implementation
+		int is_roll = m_roll_impl(n);
+		if (is_roll) return EXIT_SUCCESS;
+	}
+
 	if (n > button_count)
 		return EXIT_FAILURE;
+
+
+	while (buttons[n - 1] == L"") { // Skip empty buttons
+		if (n - p > 0) {
+			n++;
+		}
+		else n--;
+	}
 
 	menu->previous_position = p;
 	menu->position = n;
@@ -70,14 +87,49 @@ int m_select_impl(int n) {
 
 int m_confirm_impl() {
 	_menu* menu = get_menu_instance(DEFAULT_BOUNDS);
+	_screen* screen = get_screen_instance();
 	int p = menu->position;
 
-	if (buttons[p - 1] == L"Exit") {
-		exit(EXIT_SUCCESS);
+	system("cls");
+
+	if (buttons[p - 1] == L"Exit") exit(EXIT_SUCCESS);
+
+	if (buttons[p - 1] == L"Back") m_init(FALSE);
+
+	if (buttons[p - 1] == L"Options") {
+		instance->position = 1;
+
+		buttons[0] = L"Theme";
+		buttons[1] = L"";
+		buttons[2] = L"";
+		buttons[3] = L"Back";
+		button_count = 4;
 	}
+
+	m_update_impl();
 
 	return EXIT_SUCCESS;
 
+}
+
+void m_draw_buttons() {
+	for (int i = 0; i < button_count; i++) {
+		wchar_t* higher_intensity = L"\033[1m";
+		if (instance->position != i + 1) // sets the text to a higher intensity if its the selected one
+			higher_intensity = L"";
+
+		Utils.Debug(L"1-1>1> %s", buttons[0]);
+
+		if (wcscmp(buttons[0], L"Theme") == 0) {
+			wchar_t buffer[64];
+			Utils.WriteLiteral(&buffer, sizeof(buffer), L"T");
+			buttons[0] = buffer;
+		}
+
+		Utils.Debug(L"2-2>2> %s", buttons[0]);
+
+		Interface.draw_text((COORD) { bounds.width / 2 - wcslen(buttons[i])/2, (bounds.height / 2) - 2 + i * 2 }, L"%s%s", higher_intensity, buttons[i]);
+	}
 }
 
 int m_update_impl() {
@@ -87,10 +139,15 @@ int m_update_impl() {
 
 	_screen* screen = get_screen_instance();
 
+	if (p <= button_count) {
+		Interface.draw_text((COORD) { bounds.width / 2 + wcslen(buttons[p - 1]), (bounds.height / 2) - 4 + (p) * 2 }, L" ");	// Why is this 4
+	}
+
 	// should make an external function to draw the cursor (changing its visuals depending on where in the menu tree/game you are)
 	//(bounds.height / 2) - ceil(2 / button_count) + i * 2
-	Interface.draw_text((COORD) { bounds.width / 2 + wcslen(buttons[p-1]), (bounds.height / 2) - 4 + (p) * 2 }, L" ");	// Why is this 4
-	Interface.draw_text((COORD) { bounds.width / 2 + wcslen(buttons[n-1]), (bounds.height / 2) - 4 + (n) * 2 }, L"\033[6m\033[94m%s", LEFT_TRIANGLE); //u25C0 doesnt work on legacy, why??? -- u140A
+	if (n <= button_count) {
+		Interface.draw_text((COORD) { bounds.width / 2 + wcslen(buttons[n - 1]), (bounds.height / 2) - 4 + (n) * 2 }, L"\033[6m\033[9%dm%s", screen->get_theme(), LEFT_TRIANGLE);
+	}
 
 	m_draw_buttons();
 
@@ -109,7 +166,7 @@ _menu* get_menu_instance(_bounds b) {
 		bounds.width = b.width;
 	}
 
-	m_init();
+	m_init(TRUE);
 	instance->update = m_update_impl;
 	instance->select = m_select_impl;
 	instance->confirm = m_confirm_impl;

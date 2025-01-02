@@ -28,8 +28,10 @@ static DWORD WINAPI listen_impl(LPVOID lp) {
                 screen->select(screen->menu->position + 1);
                 break;
             case 77: // right
+                screen->select(screen->menu->position + 0xA);
                 break;
             case 75: // left
+                screen->select(screen->menu->position + 0xF);
                 break;
             case 13: // enter
                 screen->confirm();
