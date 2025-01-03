@@ -1,5 +1,29 @@
 #include "utils.h"
 
+int string_contains(wchar_t* first, const wchar_t* second) {
+	return wcsstr(first, second) != NULL;
+}
+
+size_t wcslen_no_ansi(const wchar_t* string) {
+	size_t length = 0;
+	int in_escape = 0;
+
+	while (*string) {
+		if (*string == L'\033') {
+			in_escape = 1;
+		}
+		else if (in_escape && *string == L'm') {
+			in_escape = 0;
+		}
+		else if (!in_escape) {
+			length++;
+		}
+		string++;
+	}
+
+	return length;
+}
+
 void append_to_buffer(wchar_t* buffer, size_t size, const wchar_t* string) {
 	wcscat_s(buffer, size / sizeof(wchar_t), string);
 }
@@ -70,12 +94,14 @@ int get_console_height() {
 }
 
 Utility Utils = {
-	.Debug = output_formatted_debug,
-	.Write = write_to_buffer,
-	.WriteLiteral = write_to_buffer_literally,
-	.Print = write_to_console,
-	.Append = append_to_buffer,
-	.GetCharacterAt = get_character_at_position,
-	.GetConsoleWidth = get_console_width,
-	.GetConsoleHeight = get_console_height
+	.debug = output_formatted_debug,
+	.write = write_to_buffer,
+	.write_literal = write_to_buffer_literally,
+	.print = write_to_console,
+	.contains = string_contains,
+	.wcslen = wcslen_no_ansi,
+	.append = append_to_buffer,
+	.get_character_at = get_character_at_position,
+	.get_console_width = get_console_width,
+	.get_console_height = get_console_height
 };

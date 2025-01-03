@@ -1,10 +1,8 @@
-﻿#include "menu.h"
-#include "screen.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <windows.h>
-
+﻿
+#include "menu.h"
 #include "utils.h"
+#include "screen.h"
+#include "sudoku.h"
 #include "interface.h"
 
 #define Y_OFFSET 4
@@ -15,17 +13,20 @@
 static _menu* instance = NULL;
 
 _menu* get_menu_instance(_bounds bounds);
-_screen* get_screen_instance();
+_screen* get_screen_instance(_game* game_ref);
 
 _bounds bounds;
+_game* game_ref;
 const wchar_t* buttons[10];
 int button_count = 0;
 
 void m_init(int reset) {
+	_screen* screen = get_screen_instance(NULL);
 	if (reset) {
 		instance->position = -1;
 		instance->previous_position = -1;
 		instance->labels = NULL;
+		game_ref = screen->get_game_ref();
 	}
 
 	buttons[0] = L"Play";
@@ -36,11 +37,15 @@ void m_init(int reset) {
 
 	if (!reset) instance->position = button_count;
 
-	Interface.draw_text((COORD) { bounds.width /2 - 6, Y_OFFSET - 2 }, L"\033[7m\033[94m S U D O K U \033[0m");
+	wchar_t buffer[64];
+	Utils.write_literal(&buffer, sizeof(buffer), L"\033[7m\033[9%dm S U D O K U ", screen->get_theme());
+
+	Interface.draw_text((COORD) { bounds.width /2 - 6, Y_OFFSET - 2 }, buffer);
 }
 
 int m_roll_impl(int n) {
 	_menu* menu = get_menu_instance(DEFAULT_BOUNDS);
+	_screen* screen = get_screen_instance(NULL);
 	int direction = 0;
 	int p = menu->position;
 
@@ -49,7 +54,11 @@ int m_roll_impl(int n) {
 
 	if (direction == 0) return !EXIT_FAILURE;
 
-	Utils.Debug(L"rolling..");
+	if (Utils.contains(buttons[p - 1], L"Theme")) screen->set_theme(screen->get_theme() + direction);
+	if (Utils.contains(buttons[p - 1], L"Grid")) game_ref->set_grid(game_ref->grid + direction);
+	if (Utils.contains(buttons[p - 1], L"Difficulty")) game_ref->set_difficulty(game_ref->difficulty + direction);
+	
+	m_update_impl();
 
 	return EXIT_SUCCESS;
 }
@@ -87,7 +96,7 @@ int m_select_impl(int n) {
 
 int m_confirm_impl() {
 	_menu* menu = get_menu_instance(DEFAULT_BOUNDS);
-	_screen* screen = get_screen_instance();
+	_screen* screen = get_screen_instance(NULL);
 	int p = menu->position;
 
 	system("cls");
@@ -96,12 +105,26 @@ int m_confirm_impl() {
 
 	if (buttons[p - 1] == L"Back") m_init(FALSE);
 
+	if (buttons[p - 1] == L"Play") {
+		instance->position = 1;
+		
+		buttons[0] = L"Continue";
+		buttons[1] = L"";
+		buttons[2] = L"[%s] Difficulty";
+		buttons[3] = L"[%s] Grid";
+		buttons[4] = L"";
+
+		buttons[5] = L"Back";
+		button_count = 6;
+	}
+
 	if (buttons[p - 1] == L"Options") {
 		instance->position = 1;
 
-		buttons[0] = L"Theme";
+		buttons[0] = L"[4] Theme";
 		buttons[1] = L"";
 		buttons[2] = L"";
+
 		buttons[3] = L"Back";
 		button_count = 4;
 	}
@@ -109,26 +132,32 @@ int m_confirm_impl() {
 	m_update_impl();
 
 	return EXIT_SUCCESS;
-
 }
 
 void m_draw_buttons() {
 	for (int i = 0; i < button_count; i++) {
 		wchar_t* higher_intensity = L"\033[1m";
+
 		if (instance->position != i + 1) // sets the text to a higher intensity if its the selected one
 			higher_intensity = L"";
 
-		Utils.Debug(L"1-1>1> %s", buttons[0]);
+		if (Utils.contains(buttons[i], L"]")) { // Dynamic buttons
+			wchar_t temp_buffer[64] = { 0 };
+			_screen* screen = get_screen_instance(NULL);
 
-		if (wcscmp(buttons[0], L"Theme") == 0) {
-			wchar_t buffer[64];
-			Utils.WriteLiteral(&buffer, sizeof(buffer), L"T");
-			buttons[0] = buffer;
+			if (Utils.contains(buttons[i], L"Theme"))
+				Utils.write_literal(&temp_buffer, sizeof(temp_buffer), L"[\033[9%dm%d\033[39m] Theme", screen->get_theme(), screen->get_theme());
+
+			if (Utils.contains(buttons[i], L"Difficulty"))
+				Utils.write_literal(&temp_buffer, sizeof(temp_buffer), L"  [\033[9%dm%s\033[39m] Difficulty  ", screen->get_theme(), game_ref->get_difficulty());
+
+			if (Utils.contains(buttons[i], L"Grid"))
+				Utils.write_literal(&temp_buffer, sizeof(temp_buffer), L"[\033[9%dm%s\033[39m] Grid", screen->get_theme(), game_ref->get_grid());
+
+			buttons[i] = _wcsdup(temp_buffer);
 		}
 
-		Utils.Debug(L"2-2>2> %s", buttons[0]);
-
-		Interface.draw_text((COORD) { bounds.width / 2 - wcslen(buttons[i])/2, (bounds.height / 2) - 2 + i * 2 }, L"%s%s", higher_intensity, buttons[i]);
+		Interface.draw_text((COORD) { bounds.width / 2 - Utils.wcslen(buttons[i])/2, (bounds.height / 2) - 2 + i * 2 }, L"%s%s", higher_intensity, buttons[i]);
 	}
 }
 
@@ -137,19 +166,19 @@ int m_update_impl() {
 	int p = instance->previous_position;
 	int n = instance->position;
 
-	_screen* screen = get_screen_instance();
+	_screen* screen = get_screen_instance(NULL);
+
+	m_draw_buttons();
 
 	if (p <= button_count) {
-		Interface.draw_text((COORD) { bounds.width / 2 + wcslen(buttons[p - 1]), (bounds.height / 2) - 4 + (p) * 2 }, L" ");	// Why is this 4
+		Interface.draw_text((COORD) { bounds.width / 2 + Utils.wcslen(buttons[p - 1])/2 + 5, (bounds.height / 2) - 4 + (p) * 2 }, L" ");	// Why is this 4
 	}
 
 	// should make an external function to draw the cursor (changing its visuals depending on where in the menu tree/game you are)
 	//(bounds.height / 2) - ceil(2 / button_count) + i * 2
 	if (n <= button_count) {
-		Interface.draw_text((COORD) { bounds.width / 2 + wcslen(buttons[n - 1]), (bounds.height / 2) - 4 + (n) * 2 }, L"\033[6m\033[9%dm%s", screen->get_theme(), LEFT_TRIANGLE);
+		Interface.draw_text((COORD) { bounds.width / 2 + Utils.wcslen(buttons[n - 1])/2 + 5, (bounds.height / 2) - 4 + (n) * 2 }, L"\033[6m\033[9%dm%s", screen->get_theme(), LEFT_TRIANGLE);
 	}
-
-	m_draw_buttons();
 
 	return EXIT_SUCCESS;
 }

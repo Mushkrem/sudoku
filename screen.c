@@ -1,9 +1,9 @@
 ﻿#pragma once
 
-#include "screen.h"
 #include "utils.h"
-
+#include "screen.h"
 #include "interface.h"
+#include "sudoku.h"
 
 #define CLEAR "\x1B[2J\x1B[H"
 #define DEFAULT_BOUNDS (_bounds){0, 0}
@@ -11,24 +11,31 @@
 static _screen* instance = NULL;
 
 _menu* get_menu_instance(_bounds bounds);
-_screen* get_screen_instance();
+_screen* get_screen_instance(_game* game_ref);
 
 _bounds bounds;
+_game* game_ref;
 int _is_legacy = NULL;
 int _theme = 4;
+
+_game* get_game_ref() {
+	return game_ref;
+}
 
 int get_theme() {
 	return _theme;
 }
 
 int set_theme(int n) {
+	if (n > 7) n = 0;
+	if (n < 0) n = 7;
 	_theme = n;
 }
 
 int is_legacy_console() {
 	if (_is_legacy != NULL) return _is_legacy;
 
-	if (Utils.GetCharacterAt((COORD) { 0, 0 }) != 32) { // At 0, 0 is the ansi code for hiding the cursor, which is later replaced with '32' in modern terminals
+	if (Utils.get_character_at((COORD) { 0, 0 }) != 32) { // At 0, 0 is the ansi code for hiding the cursor, which is later replaced with '32' in modern terminals
 		_is_legacy = 1;									// but for some reason is not in the legacy ones(or one, because that's how it works for me at least)
 	}
 	else _is_legacy = 0;
@@ -51,8 +58,8 @@ void s_init() {
 		Interface.draw_text((COORD) { 0, 0 }, L"\033[7mlegacy mode");
 	}
 
-	bounds.width = Utils.GetConsoleWidth();
-	bounds.height = Utils.GetConsoleHeight();
+	bounds.width = Utils.get_console_width();
+	bounds.height = Utils.get_console_height();
 }
 
 void clear_console() {
@@ -75,7 +82,7 @@ void clear_console() {
 int update_impl() {
 	_menu* menu = get_menu_instance(bounds);
 	while (TRUE) {
-		if (bounds.width != Utils.GetConsoleWidth()) {
+		if (bounds.width != Utils.get_console_width()) {
 			system("cls");
 		}
 		//menu->update(); //was a futile dream
@@ -94,9 +101,15 @@ int confirm_impl() {
 	return menu->confirm();
 }
 
-_screen* get_screen_instance() {
+_screen* get_screen_instance(_game* ref) {
 	if (instance != NULL)
 		return instance;
+
+	if (ref != NULL) {
+		game_ref = ref;
+		//Utils.debug(L"Difficulty = %d", game_ref->difficulty);
+	}
+
 
 	instance = (_screen*)malloc(sizeof(_screen));
 	if (instance == NULL)
@@ -109,6 +122,7 @@ _screen* get_screen_instance() {
 	instance->is_legacy = is_legacy_console;
 	instance->get_theme = get_theme;
 	instance->set_theme = set_theme;
+	instance->get_game_ref = get_game_ref;
 	instance->menu = get_menu_instance(DEFAULT_BOUNDS);
 	return instance;
 }
