@@ -3,7 +3,7 @@
 #include "interface.h"
 #include "utils.h"
 
-int read_resources_impl(_label** label) {
+int read_resources_impl() {
 	return 1;
 }
 

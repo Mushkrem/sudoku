@@ -62,30 +62,12 @@ void s_init() {
 	bounds.height = Utils.get_console_height();
 }
 
-void clear_console() {
-	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	DWORD count;
-	DWORD cell_count;
-	COORD write_coords = { 0, 0 };
-
-	if (!GetConsoleScreenBufferInfo(handle, &csbi)) return;
-	cell_count = csbi.dwSize.X * csbi.dwSize.Y;
-
-	if (!FillConsoleOutputCharacter(handle, (TCHAR)' ', cell_count, write_coords, &count)) return;
-
-	if (!FillConsoleOutputAttribute(handle, csbi.wAttributes, cell_count, write_coords, &count)) return;
-
-	SetConsoleCursorPosition(handle, write_coords);
-}
-
 int update_impl() {
 	_menu* menu = get_menu_instance(bounds);
 	while (TRUE) {
 		if (bounds.width != Utils.get_console_width()) {
-			system("cls");
+			system("cls"); // should handle it in some other way
 		}
-		//menu->update(); //was a futile dream
 		Sleep(1);
 	}
 	return EXIT_SUCCESS;
@@ -107,9 +89,7 @@ _screen* get_screen_instance(_game* ref) {
 
 	if (ref != NULL) {
 		game_ref = ref;
-		//Utils.debug(L"Difficulty = %d", game_ref->difficulty);
 	}
-
 
 	instance = (_screen*)malloc(sizeof(_screen));
 	if (instance == NULL)

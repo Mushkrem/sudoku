@@ -1,6 +1,6 @@
 #include "utils.h"
 
-int string_contains(wchar_t* first, const wchar_t* second) {
+int string_contains(const wchar_t* first, const wchar_t* second) {
 	return wcsstr(first, second) != NULL;
 }
 
@@ -22,6 +22,23 @@ size_t wcslen_no_ansi(const wchar_t* string) {
 	}
 
 	return length;
+}
+
+void clear_console() { // unused as of now
+	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	DWORD count;
+	DWORD cell_count;
+	COORD write_coords = { 0, 0 };
+
+	if (!GetConsoleScreenBufferInfo(handle, &csbi)) return;
+	cell_count = csbi.dwSize.X * csbi.dwSize.Y;
+
+	if (!FillConsoleOutputCharacter(handle, (TCHAR)' ', cell_count, write_coords, &count)) return;
+
+	if (!FillConsoleOutputAttribute(handle, csbi.wAttributes, cell_count, write_coords, &count)) return;
+
+	SetConsoleCursorPosition(handle, write_coords);
 }
 
 void append_to_buffer(wchar_t* buffer, size_t size, const wchar_t* string) {
@@ -55,7 +72,7 @@ void write_to_console(const wchar_t* buffer, COORD position) {
 	SetConsoleCursorPosition(handle, position);
 	DWORD c_written; 
 	if (handle != INVALID_HANDLE_VALUE) {
-		WriteConsoleW(handle, buffer, wcslen(buffer), &c_written, NULL);
+		WriteConsoleW(handle, buffer, (DWORD)wcslen(buffer), &c_written, NULL);
 	}
 }
 

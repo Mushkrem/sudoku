@@ -33,7 +33,7 @@ wchar_t* get_difficulty() {
 
 wchar_t* get_grid() {
     wchar_t buffer[32];
-    Utils.write_literal(&buffer, sizeof(buffer), L"%dx%d", game.grid, game.grid);
+    Utils.write_literal(buffer, sizeof(buffer), L"%dx%d", game.grid, game.grid);
     
     wchar_t* result = _wcsdup(buffer);
     return result;
@@ -46,10 +46,11 @@ int main(int argc, char* argv[]) {
     game.difficulty = 1;
     game.points = 0;
     game.grid = 3;
+
     game.set_grid = set_grid;
+    game.get_grid = get_grid;
     game.set_difficulty = set_difficulty;
     game.get_difficulty = get_difficulty;
-    game.get_grid = get_grid;
 
     _screen* screen = get_screen_instance(&game);
     
