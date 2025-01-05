@@ -73,6 +73,9 @@ void m_init(int first_run) {
 int m_roll_impl(int n) {
 	_menu* menu = get_menu_instance(DEFAULT_BOUNDS);
 	_screen* screen = get_screen_instance(NULL);
+	
+	if (button_count == 0) return EXIT_FAILURE;
+
 	int direction = 0;
 	int p = menu->position;
 
