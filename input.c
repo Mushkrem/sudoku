@@ -2,17 +2,20 @@
 
 #include "input.h"
 #include "screen.h"
+#include "game.h"
 
 #include "utils.h"
 
 _screen* get_screen_instance();
+
+_game* game_ref;
 
 static DWORD WINAPI listen_impl(LPVOID lp) {
     int* number = (int*)lp;
     char c;
     int d;
 
-    _screen*screen = get_screen_instance();
+    _screen* screen = get_screen_instance();
 
     while (TRUE) {
         c = _getch();
@@ -47,6 +50,9 @@ static DWORD WINAPI listen_impl(LPVOID lp) {
 INPUTS get_inputs() {
     INPUTS input;
     input.listen = listen_impl;
+
+    _screen* screen = get_screen_instance();
+    game_ref = screen->get_game_ref();
 
     return input;
 }

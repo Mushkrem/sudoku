@@ -3,7 +3,6 @@
 #include "utils.h"
 #include "screen.h"
 #include "interface.h"
-#include "sudoku.h"
 
 #define CLEAR "\x1B[2J\x1B[H"
 #define DEFAULT_BOUNDS (_bounds){0, 0}
@@ -26,7 +25,7 @@ int get_theme() {
 	return _theme;
 }
 
-int set_theme(int n) {
+void set_theme(int n) {
 	if (n > 7) n = 0;
 	if (n < 0) n = 7;
 	_theme = n;
@@ -66,7 +65,7 @@ int update_impl() {
 	_menu* menu = get_menu_instance(bounds);
 	while (TRUE) {
 		if (bounds.width != Utils.get_console_width()) {
-			system("cls"); // should handle it in some other way
+			//system("cls"); // should handle it in some other way
 		}
 		Sleep(1);
 	}

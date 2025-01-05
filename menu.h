@@ -17,5 +17,6 @@ typedef struct _menu {
     int (*select)();
     int (*confirm)();
     void (*update_label)();
+    void (*remove_labels)();
 
 } _menu;

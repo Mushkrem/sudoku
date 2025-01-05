@@ -2,7 +2,7 @@
 #include "menu.h"
 #include "utils.h"
 #include "screen.h"
-#include "sudoku.h"
+#include "game.h"
 #include "interface.h"
 
 #define Y_OFFSET 4
@@ -24,8 +24,7 @@ int button_count = 0;
 
 void add_button(wchar_t* string) {
 	buttons[button_count] = string;
-	is_dynamic[button_count] = 0;
-	button_count++;
+	is_dynamic[button_count++] = 0;
 }
 
 void add_buttons(wchar_t* first, ...) {
@@ -83,7 +82,7 @@ int m_roll_impl(int n) {
 	if (direction == 0) return !EXIT_FAILURE;
 
 	if (Utils.contains(buttons[p - 1], L"Theme")) screen->set_theme(screen->get_theme() + direction);
-	if (Utils.contains(buttons[p - 1], L"Grid")) game_ref->set_grid(game_ref->grid + direction);
+	if (Utils.contains(buttons[p - 1], L"Grid")) game_ref->set_grid(game_ref->grid + direction * 3);
 	if (Utils.contains(buttons[p - 1], L"Difficulty")) game_ref->set_difficulty(game_ref->difficulty + direction);
 	
 	m_update_impl();
@@ -136,7 +135,13 @@ int m_confirm_impl() {
 	}
 
 	if (buttons[p - 1] == L"Continue") { // Start the actual game
+		menu->remove_labels();
+		remove_buttons();
 
+		system("cls");
+
+		game_ref->start();
+		return EXIT_SUCCESS;
 	}
 
 	if (buttons[p - 1] == L"Options") { // Create the 'Options' menu
@@ -188,6 +193,13 @@ void m_draw_buttons() {
 		}
 
 		Interface.draw_text((COORD) { bounds.width / 2 - Utils.wcslen(buttons[i])/2, (bounds.height / 2) - 2 + i * 2 }, L"%s%s", higher_intensity, buttons[i]);
+	}
+}
+
+void m_remove_labels() {
+	_menu* menu = get_menu_instance(DEFAULT_BOUNDS);
+	for (int i = 0; menu->labels[i].string != NULL; i++) {
+		menu->labels[i] = (_label){ NULL, (COORD) { 0, 0 } };
 	}
 }
 
@@ -253,6 +265,7 @@ _menu* get_menu_instance(_bounds b) {
 
 	m_init(TRUE);
 	instance->update_label = m_update_label_impl;
+	instance->remove_labels = m_remove_labels;
 	instance->update = m_update_impl;
 	instance->select = m_select_impl;
 	instance->confirm = m_confirm_impl;

@@ -10,8 +10,12 @@ typedef struct _game {
     void (*set_difficulty)(int n);
     wchar_t* (*get_difficulty)();
     wchar_t* (*get_grid)();
+    void (*start)();
 
     int grid;
     int points;
     int difficulty;
+    int started;
 } _game;
+
+void g_init(_game* g);

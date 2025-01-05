@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="game.c" />
     <ClCompile Include="input.c" />
     <ClCompile Include="interface.c" />
     <ClCompile Include="menu.c" />
@@ -135,11 +136,11 @@
     <ClCompile Include="utils.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="game.h" />
     <ClInclude Include="input.h" />
     <ClInclude Include="interface.h" />
     <ClInclude Include="menu.h" />
     <ClInclude Include="screen.h" />
-    <ClInclude Include="sudoku.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
