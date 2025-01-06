@@ -64,8 +64,11 @@ void s_init() {
 int update_impl() {
 	_menu* menu = get_menu_instance(bounds);
 	while (TRUE) {
-		if (bounds.width != Utils.get_console_width()) {
-			//system("cls"); // should handle it in some other way
+		if (bounds.width != Utils.get_console_width() || bounds.height != Utils.get_console_height()) {
+			system("cls"); // should handle it in some other way
+			menu->update();
+			if (game_ref->started)
+				game_ref->update();
 		}
 		Sleep(1);
 	}

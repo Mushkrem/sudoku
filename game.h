@@ -6,11 +6,13 @@
 #include <stdio.h>
 
 typedef struct _game {
-    void (*set_grid)(int n);
     void (*set_difficulty)(int n);
     wchar_t* (*get_difficulty)();
+    void (*set_grid)(int n);
     wchar_t* (*get_grid)();
+    void (*update)();
     void (*start)();
+    void (*stop)();
 
     int grid;
     int points;

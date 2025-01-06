@@ -21,6 +21,7 @@ _game* game_ref;
 const wchar_t* buttons[10];
 int is_dynamic[10] = { 0 };
 int button_count = 0;
+int label_count = 0;
 
 void add_button(wchar_t* string) {
 	buttons[button_count] = string;
@@ -55,17 +56,23 @@ void m_init(int first_run) {
 	if (first_run) {
 		menu->position = -1;
 		menu->previous_position = -1;
+
+		menu->remove_labels();
+
+		system("cls");
 		
 		game_ref = screen->get_game_ref();
 
 		wchar_t buffer[64];
-		Utils.write_literal(buffer, sizeof(buffer), L"\033[7m\033[9%dm S U D O K U ", screen->get_theme());
+		Utils.write_literal(buffer, sizeof(buffer), L"[] Sudoku");
 
-		menu->labels[0].string = _wcsdup(buffer);
-		menu->labels[0].position = (COORD){ bounds.width / 2 - 6, Y_OFFSET - 2 };
+		menu->update_label(&menu->labels[0], buffer, (COORD) { bounds.width / 2 - 6, Y_OFFSET - 2 });
+
 	}
 
 	add_buttons(L"Play", L"Options", L"Exit", NULL);
+
+	menu->update();
 
 	if (!first_run) menu->position = button_count;
 }
@@ -88,7 +95,7 @@ int m_roll_impl(int n) {
 	if (Utils.contains(buttons[p - 1], L"Grid")) game_ref->set_grid(game_ref->grid + direction * 3);
 	if (Utils.contains(buttons[p - 1], L"Difficulty")) game_ref->set_difficulty(game_ref->difficulty + direction);
 	
-	m_update_impl();
+	menu->update();
 
 	return EXIT_SUCCESS;
 }
@@ -176,6 +183,7 @@ void m_draw_buttons() {
 
 		if (Utils.contains(buttons[i], L"]")) { // Dynamic buttons (with variables inside of them)
 			wchar_t temp_buffer[64] = { 0 };
+
 			_screen* screen = get_screen_instance(NULL);
 
 			if (Utils.contains(buttons[i], L"Theme"))
@@ -203,13 +211,45 @@ void m_remove_labels() {
 	_menu* menu = get_menu_instance(DEFAULT_BOUNDS);
 	for (int i = 0; menu->labels[i].string != NULL; i++) {
 		menu->labels[i] = (_label){ NULL, (COORD) { 0, 0 } };
+		free(menu->labels->string);
 	}
 }
 
 void m_draw_labels() {
 	_menu* menu = get_menu_instance(DEFAULT_BOUNDS);
+	_screen* screen = get_screen_instance(NULL);
 	for (int i = 0; menu->labels[i].string != NULL; i++) {
 		_label label = menu->labels[i];
+		
+		wchar_t temp_buffer[128] = { 0 };
+
+		if (Utils.contains(label.string, L"Sudoku")) {
+			Utils.write_literal(temp_buffer, sizeof(temp_buffer), L"\033[7m\033[9%dm S U D O K U ", screen->get_theme());
+			label.position = (COORD){ bounds.width / 2 - 6, Y_OFFSET - 2 };
+		}
+
+		if (Utils.contains(label.string, L"ESC_QUIT")) {
+			Utils.write_literal(temp_buffer, sizeof(temp_buffer), L"\033[9%dmESC\033[39m Quit", screen->get_theme());
+			label.position = (COORD){ 2, 0 };
+		}
+
+		if (Utils.contains(label.string, L"NO_PLACE")) {
+			Utils.write_literal(temp_buffer, sizeof(temp_buffer), L"\033[9%dm0\033[39m-\033[9%dm%d\033[39m Place", screen->get_theme(), screen->get_theme(), game_ref->grid);
+			label.position = (COORD){ 2, bounds.height - 3 };
+		}
+
+		if (Utils.contains(label.string, L"UP_DOWN")) {
+			Utils.write_literal(temp_buffer, sizeof(temp_buffer), L"\033[9%dm↑\033[39m/\033[9%dm↓\033[39m Up/Down", screen->get_theme(), screen->get_theme());
+			label.position = (COORD){ 2, bounds.height - 2 };
+		}
+
+		if (Utils.contains(label.string, L"RIGHT_LEFT")) {
+			Utils.write_literal(temp_buffer, sizeof(temp_buffer), L"\033[9%dm→\033[39m/\033[9%dm←\033[39m Right/Left", screen->get_theme(), screen->get_theme());
+			label.position = (COORD){ 2, bounds.height - 1 };
+		}
+
+		label.string = _wcsdup(temp_buffer);
+
 		Interface.draw_text(label.position, label.string);
 	}
 }
@@ -217,6 +257,10 @@ void m_draw_labels() {
 int m_update_impl() {
 	_menu* menu = get_menu_instance(DEFAULT_BOUNDS);
 	_screen* screen = get_screen_instance(NULL);
+	_bounds current_bounds = (_bounds){ Utils.get_console_width(), Utils.get_console_height() };
+	if (current_bounds.height != bounds.height || current_bounds.width != bounds.width) {
+		bounds = current_bounds;
+	}
 
 	int p = instance->previous_position;
 	int n = instance->position;
@@ -241,6 +285,8 @@ void m_update_label_impl(_label* label, const wchar_t* string, COORD position) {
 	}
 	label->string = _wcsdup(string);
 	label->position = position;
+
+	m_draw_labels();
 }
 
 _menu* get_menu_instance(_bounds b) {
@@ -266,12 +312,14 @@ _menu* get_menu_instance(_bounds b) {
 		instance->labels[i].position = (COORD){ 0, 0 };
 	}
 
-	m_init(TRUE);
 	instance->update_label = m_update_label_impl;
 	instance->remove_labels = m_remove_labels;
 	instance->update = m_update_impl;
 	instance->select = m_select_impl;
 	instance->confirm = m_confirm_impl;
+	instance->init = m_init;
+
+	m_init(TRUE);
 	
 	return instance;
 }

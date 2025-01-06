@@ -13,6 +13,7 @@ typedef struct _menu {
     unsigned char position;
     unsigned char previous_position;
 
+    void (*init)();
     int (*update)();
     int (*select)();
     int (*confirm)();

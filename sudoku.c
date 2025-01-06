@@ -5,6 +5,8 @@
 #include "input.h"
 #include "utils.h"
 
+#include <time.h>
+
 //  ┌─────────┬─────────┬────────┐
 //  ├─────────┼─────────┼────────┤
 //  │         │         │        │
@@ -23,7 +25,7 @@ int main(int argc, char* argv[]) {
     g_init(&game);
 
     _screen* screen = get_screen_instance(&game);
-    
+
     // Initializing input and screen loop functions
     INPUTS input = get_inputs();
 

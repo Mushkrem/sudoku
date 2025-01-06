@@ -39,6 +39,12 @@ static DWORD WINAPI listen_impl(LPVOID lp) {
             case 13: // enter
                 screen->confirm();
                 break;
+            case 27: // esc
+                if (!game_ref->started) break;
+                game_ref->stop();
+                screen->menu->init(TRUE);
+                screen->select(1);
+                break;
             default:
                 break;
         }

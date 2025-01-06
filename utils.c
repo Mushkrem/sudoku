@@ -72,6 +72,11 @@ void write_to_console(const wchar_t* buffer, COORD position) {
 	SetConsoleCursorPosition(handle, position);
 	DWORD c_written; 
 	if (handle != INVALID_HANDLE_VALUE) {
+		wchar_t clear_char = L' ';
+		WriteConsoleW(handle, &clear_char, 1, &c_written, NULL);
+
+		SetConsoleCursorPosition(handle, position);
+
 		WriteConsoleW(handle, buffer, (DWORD)wcslen(buffer), &c_written, NULL);
 	}
 }
