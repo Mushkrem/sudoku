@@ -5,6 +5,8 @@
 #include "interface.h"
 #include "screen.h"
 
+#include "math.h"
+
 #define DEFAULT_BOUNDS (_bounds){0, 0}
 
 _game* game;
@@ -38,12 +40,6 @@ void shuffle(int* array, int n) {
             array[i] = array[j];
             array[j] = t;
         }
-    }
-}
-
-void shuffle_two(int* array) {
-    for (int i = 0; i < game->grid - 1; i++) {
-
     }
 }
 
@@ -116,157 +112,96 @@ int solve_sudoku(int row, int column) {
 }
 
 void generate_board() {
-    for (int i = 0; i < 9; i++) { 
-        for (int j = 0; j < 9; j++) { 
-            solved_board[i][j] = 0; 
-        } 
-    }
-
-    // 9x9 generation:
-    // first generate one 3x3 square
+    // pool of numbers to choose from
     int numbers_stack[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
     srand(time(NULL) ^ getpid() << 16); // time(NULL) alone wasn't really random
 
+    // shuffle takes into an account the size of grids, so if its 6, only the first 6 spaces in the array will be shuffled.
     shuffle(numbers_stack, 9);
 
-    wchar_t buffer[128];
-    memset(buffer, 0, sizeof(buffer));
-    for (int i = 0; i < 9; i++) {
-        if (i != 0) {
-            Utils.write_literal(buffer, sizeof(buffer), L"%s %d ", buffer, numbers_stack[i]);
-        }
-        else if (i == 0) {
-            Utils.write_literal(buffer, sizeof(buffer), L" %d ", numbers_stack[i]);
-        }
-    }
-    Utils.debug(buffer);
+    // populate board (array, int) where the int corresponds to a square inside the full grid. grid[9x9] is composed of 9 squares sized 3x3
+    // is later used for backtracking
+    int random_square = (rand() % 9) + 1; // adds more new combinations(a lot) for the sudoku board
+    populate_board(numbers_stack, random_square);
 
-    populate_board(numbers_stack, 1);
-
+    // fill the rest of the board using backtracking - filling all zeroes according to sudoku rules.
     solve_sudoku(0, 0);
 }
 
-void draw_odd_board() { // i dont care i cant d
+void draw_board_numbers() {
     _screen* screen = get_screen_instance(NULL);
+
+    // Centering the grid
     int board_size_y = game->grid + (int)(game->grid / 3);
     int board_size_x = game->grid * 2 + (int)(game->grid / 3) * 2;
-    int y_offset = Utils.get_console_height() / 2 - board_size_y / 2;
-    int x_offset = Utils.get_console_width() / 2 - board_size_x / 2;
-    int x_inc = 0; // additional spacing for vertical borders between the numbers
-    int y_inc = 0; // additional spacing for horizontal borders between the numbers
+    int y_offset = (Utils.get_console_height() / 2 - board_size_y / 2) + 1;
+    int x_offset = (Utils.get_console_width() / 2 - board_size_x / 2) + 2;
 
-    for (int column = 0; column <= board_size_x; column++) { // <= so the border is bigger
-        for (int row = 0; row <= board_size_y; row++) {
-            
-            if (row < game->grid && column < game->grid) { // Inner numbers
-                int n = solved_board[column][row];
-                if (n != 0) {
-                    Interface.draw_text((COORD) { x_offset + 2 + x_inc * 2, y_offset + 1 + y_inc }, L"%x", n);
-                }
-                else {
-                    Interface.draw_text((COORD) { x_offset + 2 + x_inc * 2, y_offset + 1 + y_inc }, L"┄");
-                }
-                if ((column + 1) % 3 == 0)
-                    Interface.draw_text((COORD) { x_offset + 2 + x_inc * 2 + 2, y_offset + 1 + y_inc }, L"│");
+    // Depening on the grid size, board needs different spacings between the numbers
+    // 9x9 is 9 * 3x3 grids
+    // 6x6 is 6 * 2x3 grids
+    // 3x3 is 3 * 1x3 grids
+    // could factor those if i want to create custom grids such as (4x4, 15x15, etc.), but there are also prime numbers (eg. 17) and i don't wanna deal with that.
+    // gonna stick with just 9x9, 6x6 and 3x3.
 
-                if (column == 0)
-                    Interface.draw_text((COORD) { x_offset - 2 + x_inc * 2 + 2, y_offset + 1 + y_inc }, L"│");
-            }
-
-            if (row == 0) {
-                Interface.draw_text((COORD) { column + x_offset, y_offset }, L"─");
-                if (column == 0) Interface.draw_text((COORD) { x_offset, y_offset }, L"┌");
-                if (column == board_size_x) Interface.draw_text((COORD) { board_size_x + x_offset, y_offset }, L"┐");
-                if (column % 6 == 0 && column != 0) {
-                    Interface.draw_text((COORD) { x_offset + x_inc, y_offset }, L"┬");
-                }
-            }
-
-            y_inc++;
-            if ((row + 1) % 2 == 0) y_inc++;
+    int spacing = (game->grid % 2 == 0) ? 2 : 3; // if the grid size is even (6), make the spacing 2, otherwise 3
+    int row_spacing = 0;
+    int column_spacing = 0;
+    for (int column = 0; column < game->grid; column++) {
+        for (int row = 0; row < game->grid; row++) {
+            int n = solved_board[column][row];
+            if (n != 0) Interface.draw_text((COORD) { x_offset + column + column_spacing, y_offset + row + row_spacing }, L"%x", n);
+            if ((row + 1) % spacing == 0) row_spacing++; // add additional row spacing after each (nd|rd) column
         }
-        y_inc = 0;
-        x_inc++;
-
-        if ((column + 1) % 3 == 0) x_inc++;
+        row_spacing = 0; // revert it to 0 every column
+        if ((column + 1) % 3 == 0) column_spacing += 2; // add additional spacing after each third column
+        column_spacing++; // add additional spacing after each column
     }
 }
 
-void draw_board() {
+void draw_board_grid() {
     _screen* screen = get_screen_instance(NULL);
-    int board_size_y = game->grid + (int)(game->grid / 3);
-    int board_size_x = game->grid * 2 + (int)(game->grid / 3)*2;
+
+    int spacing = (game->grid % 2 == 0) ? 2 : 3; // if the grid size is even (6), make the spacing 2, otherwise 3
+
+    // Centering the grid
+    int board_size_y = game->grid + (int)(game->grid / 3) + (3 - spacing);
+    int board_size_x = game->grid * 2 + (int)(game->grid / 3) * 2;
     int y_offset = Utils.get_console_height() / 2 - board_size_y / 2;
     int x_offset = Utils.get_console_width() / 2 - board_size_x / 2;
-    int x_inc = 0; // additional spacing for vertical borders between the numbers
-    int y_inc = 0; // additional spacing for horizontal borders between the numbers
 
-    int is_odd = (game->grid % 2 == 0) ? 0 : 1;
-
-    if (!is_odd) {
-        draw_odd_board(); // i dont care this is stupid
-        return; // i hate this
-    }
-
-    for (int column = 0; column <= board_size_x; column++) { // <= so the border is bigger
+    int previous_row_spacing = 0;
+    int column_spacing = 0;
+    for (int column = 0; column <= board_size_x; column++) {
         for (int row = 0; row <= board_size_y; row++) {
-            
-            if (column == 0) { // Left side
-                Interface.draw_text((COORD) { x_offset, y_offset + row }, L"│", screen->get_theme());
+            if (column % 8 == 0) Interface.draw_text((COORD) { x_offset + column, y_offset + row }, L"│");
+
+            if (row % (spacing + 1) == 0) {
+                Interface.draw_text((COORD) { x_offset + column, y_offset + row }, L"─");
+                if (column % 8 == 0) Interface.draw_text((COORD) { x_offset + column, y_offset + row }, L"┼");
+                if (column == 0) Interface.draw_text((COORD) { x_offset + column, y_offset + row }, L"├");
+                if (column == board_size_x) Interface.draw_text((COORD) { x_offset + column, y_offset + row }, L"┤");
             }
-
-            if ((row + 1) % 3 == 0 && column < board_size_x) { // Inner table
-                if (column == 0 && row != 2 && row != board_size_y - is_odd)
-                    Interface.draw_text((COORD) { x_offset, y_offset - 2 + y_inc }, L"├");
-
-                if (column == board_size_x - 1 && row != 2 && row != board_size_y - 1)
-                    Interface.draw_text((COORD) { x_offset + board_size_x, y_offset - 2 + y_inc }, L"┤");
-
-                if ((column + 1) % 6 == 0 && column < board_size_x - 1) {
-                    Interface.draw_text((COORD) { x_offset + x_inc + 2, y_offset - 2 + y_inc }, L"┼");
-                    if (row == 2) Interface.draw_text((COORD) { x_offset + x_inc + 2, y_offset - 2 + y_inc }, L"┬");
-                    if (row == board_size_y - is_odd) Interface.draw_text((COORD) { x_offset + x_inc + 2, y_offset - 2 + y_inc }, L"┴");
-                }
-
-                if (column % 8 != 0) {
-                    Interface.draw_text((COORD) { x_offset + column, y_offset - 2 + y_inc }, L"─");
-                    if (game->grid == 3) Interface.draw_text((COORD) { x_offset + column, y_offset + 2 + y_inc }, L"─");
-                }
-
-            }
-
-            if (row == 0) {
-                if (column == 0) Interface.draw_text((COORD) { x_offset, y_offset }, L"┌");
-                if (column == board_size_x) Interface.draw_text((COORD) { x_offset + board_size_x, y_offset }, L"┐");
-            }
-
-            if (row == board_size_y) {
-                if (column == 0) Interface.draw_text((COORD) { x_offset, y_offset + board_size_y }, L"└");
-                if (column == board_size_x) Interface.draw_text((COORD) { x_offset + board_size_x, y_offset + board_size_y }, L"┘");
-            }
-
-            if (row < game->grid && column < game->grid) {
-                int n = solved_board[column][row];
-                if (n != 0) {
-                    Interface.draw_text((COORD) { x_offset + 2 + x_inc * 2, y_offset + 1 + y_inc }, L"%x", n);
-                }
-                else {
-                    Interface.draw_text((COORD) { x_offset + 2 + x_inc * 2, y_offset + 1 + y_inc }, L"┄");
-                }
-                if ((column + 1) % 3 == 0)
-                    Interface.draw_text((COORD) { x_offset + 2 + x_inc * 2 + 2, y_offset + 1 + y_inc }, L"│");
-            }
-
-            if ((row + 1) % 3 == 0)
-                y_inc++;
-
-            y_inc++;
         }
-        y_inc = 0;
-        x_inc++;
 
-        if ((column+1) % 3 == 0) x_inc++;
+        if (column % 8 == 0) {
+            Interface.draw_text((COORD) { x_offset + column, y_offset }, L"┬"); // Between number grids at the top
+            Interface.draw_text((COORD) { x_offset + column, y_offset + board_size_y }, L"┴"); // Between number grids at the bottom
+        }
+
+        if (column == 0) {
+            Interface.draw_text((COORD) { x_offset + column, y_offset }, L"┌"); // Top left corner
+            Interface.draw_text((COORD) { x_offset + column, y_offset + board_size_y }, L"└"); // Bottom-left corner
+        }
+
+        if (column == board_size_x) {
+            Interface.draw_text((COORD) { x_offset + column, y_offset }, L"┐"); // Top-right corner
+            Interface.draw_text((COORD) { x_offset + column, y_offset + board_size_y }, L"┘"); // Bottom-right corner
+        }
+
+        if ((column + 1) % 3 == 0) column_spacing += 2;
+        column_spacing++;
     }
 }
 
@@ -295,7 +230,8 @@ wchar_t* get_grid() {
 }
 
 void g_update_impl() {
-    draw_board();
+    draw_board_numbers();
+    draw_board_grid();
 }
 
 void tutorial() {
@@ -334,6 +270,9 @@ void print_board() {
     }
 }
 
+int select(int n) {
+    return EXIT_SUCCESS;
+}
 
 void start() {
     game->started = 1;
@@ -360,6 +299,8 @@ void g_init(_game* g) {
     game->set_grid = set_grid;
     game->start = start;
     game->stop = stop;
+
+    game->select = select;
 
     game->started = 0;
 }

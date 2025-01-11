@@ -76,6 +76,7 @@ int update_impl() {
 }
 
 int select_impl(int n) {
+	if (game_ref->started) return game_ref->select(n);
 	_menu* menu = get_menu_instance(DEFAULT_BOUNDS);
 	return menu->select(n);
 }

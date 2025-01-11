@@ -13,6 +13,7 @@ typedef struct _game {
     void (*update)();
     void (*start)();
     void (*stop)();
+    int (*select)(int n);
 
     int grid;
     int points;
