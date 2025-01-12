@@ -14,20 +14,6 @@ wchar_t* difficulties[3] = { L"Easy", L"Normal", L"Hard" };
 _screen* get_screen_instance(_game* game_ref);
 _menu* get_menu_instance(_bounds bounds);
 
-int dummy_solved_board[9][9] = {        //  ┌─────────┬─────────┬─────────┐
-    {5, 3, 4,   6, 7, 8,    9, 1, 2},   //  │ 5  3  4 │ 6  7  8 │ 9  1  2 │
-    {6, 7, 2,   1, 9, 5,    3, 4, 8},   //  │ 6  7  2 │ 1  9  5 │ 3  4  8 │
-    {1, 9, 8,   3, 4, 2,    5, 6, 7},   //  │ 1  9  8 │ 3  4  2 │ 5  6  7 │
-                                        //  ├─────────┼─────────┼─────────┤
-    {8, 5, 9,   7, 6, 1,    4, 2, 3},   //  │ 8  5  9 │ 7  6  1 │ 4  2  3 │
-    {4, 2, 6,   8, 5, 3,    7, 9, 1},   //  │ 4  2  6 │ 8  5  3 │ 7  9  1 │
-    {7, 1, 3,   9, 2, 4,    8, 5, 6},   //  │ 7  1  3 │ 9  2  4 │ 8  5  6 │
-                                        //  ├─────────┼─────────┼─────────┤
-    {9, 6, 1,   5, 3, 7,    2, 8, 4},   //  │ 9  6  1 │ 5  3  7 │ 2  8  4 │
-    {2, 8, 7,   4, 1, 9,    6, 3, 5},   //  │ 2  8  7 │ 4  1  9 │ 6  3  5 │
-    {3, 4, 5,   2, 8, 6,    1, 7, 9}    //  │ 3  4  5 │ 2  8  6 │ 1  7  9 │
-};                                      //  └─────────┴─────────┴─────────┘
-
 int solved_board[9][9];
 
 int board[9][9] = { 0 };
@@ -45,10 +31,10 @@ void shuffle(int* array, int n) {
 
 void populate_board(int* array, int position) {
     int x_bound = ((position - 1) % 3 + 1) * 3;
-    int y_bound = ((position - 1) / 3 + 1) * 3;
+    int y_bound = ((position - 1) / (game->grid / 3) + 1) * (game->grid / 3);
     int i = 0;
 
-    for (int k = y_bound - 3; k < y_bound; k++) {
+    for (int k = y_bound - (game->grid / 3); k < y_bound; k++) {
         for (int l = x_bound - 3; l < x_bound; l++) {
             solved_board[l][k] = array[i];
             if (i >= game->grid - 1) i = 0;
@@ -72,12 +58,12 @@ int is_safe(int column, int row, int n) {
 
     //check square
     int x_bound = ((column / 3) + 1) * 3;
-    int y_bound = ((row / 3) + 1) * 3;
+    int y_bound = ((row / (game->grid / 3)) + 1) * (game->grid / 3);
 
-    for (int i = y_bound - 3; i < y_bound; i++) {
+    for (int i = y_bound - (game->grid / 3); i < y_bound; i++) {
         for (int j = x_bound - 3; j < x_bound; j++) {
             if (n == solved_board[j][i])
-                return 1;
+                return 0;
         }
     }
 
@@ -99,7 +85,6 @@ int solve_sudoku(int row, int column) {
 
     for (int num = 1; num <= game->grid; num++) {
         if (is_safe(row, column, num)) {
-            //Utils.debug(L"Y, Column = %d, Row = %d, No = %d\n", column, row, num);
             solved_board[row][column] = num;
             if (solve_sudoku(row, column + 1)) {
                 return 1;
@@ -114,22 +99,26 @@ int solve_sudoku(int row, int column) {
 void generate_board() {
     // pool of numbers to choose from
     int numbers_stack[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
-
-    srand(time(NULL) ^ getpid() << 16); // time(NULL) alone wasn't really random
+    memset(solved_board, 0, sizeof(solved_board));
 
     // shuffle takes into an account the size of grids, so if its 6, only the first 6 spaces in the array will be shuffled.
-    shuffle(numbers_stack, 9);
+    //shuffle(numbers_stack, 9);
 
     // populate board (array, int) where the int corresponds to a square inside the full grid. grid[9x9] is composed of 9 squares sized 3x3
     // is later used for backtracking
-    int random_square = (rand() % 9) + 1; // adds more new combinations(a lot) for the sudoku board
-    populate_board(numbers_stack, random_square);
+    int spacing = (game->grid % 2 == 0) ? 2 : 3;
+    for (int i = 1; i <= game->grid; i += ((game->grid/spacing) + 1)) {
+        Utils.debug(L"Heyulo %d", game->grid);
+        shuffle(numbers_stack, game->grid);
+        populate_board(numbers_stack, i);
+    }
+    //populate_board(numbers_stack, random_square);
 
     // fill the rest of the board using backtracking - filling all zeroes according to sudoku rules.
     solve_sudoku(0, 0);
 }
 
-void draw_board_numbers() {
+void draw_board_numbers(int highlight) {
     _screen* screen = get_screen_instance(NULL);
 
     // Centering the grid
@@ -148,11 +137,16 @@ void draw_board_numbers() {
     int spacing = (game->grid % 2 == 0) ? 2 : 3; // if the grid size is even (6), make the spacing 2, otherwise 3
     int row_spacing = 0;
     int column_spacing = 0;
+    int count = 0;
     for (int column = 0; column < game->grid; column++) {
         for (int row = 0; row < game->grid; row++) {
             int n = solved_board[column][row];
-            if (n != 0) Interface.draw_text((COORD) { x_offset + column + column_spacing, y_offset + row + row_spacing }, L"%x", n);
+            if (n != 0 && highlight == -1 || n != 0 && count == screen->menu->previous_position) {
+                Interface.draw_text((COORD) { x_offset + column + column_spacing, y_offset + row + row_spacing }, L"%x", n);
+            }
+            if (count == highlight || (highlight == -1 && count == 0)) Interface.draw_text((COORD) { x_offset + column + column_spacing, y_offset + row + row_spacing }, L"\033[9%dm%x", screen->get_theme(), n);
             if ((row + 1) % spacing == 0) row_spacing++; // add additional row spacing after each (nd|rd) column
+            count++;
         }
         row_spacing = 0; // revert it to 0 every column
         if ((column + 1) % 3 == 0) column_spacing += 2; // add additional spacing after each third column
@@ -230,26 +224,26 @@ wchar_t* get_grid() {
 }
 
 void g_update_impl() {
-    draw_board_numbers();
+    draw_board_numbers(-1);
     draw_board_grid();
 }
 
-void tutorial() {
+void game_ui() {
     _menu* menu = get_menu_instance(DEFAULT_BOUNDS);
     _screen* screen = get_screen_instance(NULL);
 
     wchar_t buffer[128];
     Utils.write_literal(buffer, sizeof(buffer), L"ESC_QUIT");
-    menu->update_label(&menu->labels[0], buffer, (COORD) { NULL, NULL });
+    menu->update_label(&menu->labels[0], buffer, (COORD) { (short)NULL, (short)NULL });
 
     Utils.write_literal(buffer, sizeof(buffer), L"NO_PLACE");
-    menu->update_label(&menu->labels[1], buffer, (COORD) { NULL, NULL });
+    menu->update_label(&menu->labels[1], buffer, (COORD) { (short)NULL, (short)NULL });
 
     Utils.write_literal(buffer, sizeof(buffer), L"UP_DOWN");
-    menu->update_label(&menu->labels[2], buffer, (COORD) { NULL, NULL });
+    menu->update_label(&menu->labels[2], buffer, (COORD) { (short)NULL, (short)NULL });
 
     Utils.write_literal(buffer, sizeof(buffer), L"RIGHT_LEFT");
-    menu->update_label(&menu->labels[3], buffer, (COORD) { NULL, NULL });
+    menu->update_label(&menu->labels[3], buffer, (COORD) { (short)NULL, (short)NULL });
 
 }
 
@@ -271,6 +265,34 @@ void print_board() {
 }
 
 int select(int n) {
+    _menu* menu = get_menu_instance(DEFAULT_BOUNDS);
+    int p = menu->position;
+
+    if (n < 0) {
+        return EXIT_FAILURE;
+    }
+
+    int direction = n - p;
+    if (n - p == 0xA) direction = 1;
+    if (n - p == 0xF) direction = -1;
+
+    if (n - p > 1) {
+        if (p + (direction * game->grid) < 0 || p + (direction * game->grid) >= game->grid * game->grid) return EXIT_FAILURE;
+        menu->position += direction * game->grid;
+    }
+    else {
+        if (n % game->grid == 0 && n - p > 0) {
+            return EXIT_FAILURE;
+        }
+
+        if ((n + 1) % game->grid == 0 && n - p < 0) return EXIT_FAILURE;
+
+        menu->position = n;
+    }
+
+    menu->previous_position = p;
+
+    draw_board_numbers(menu->position);
     return EXIT_SUCCESS;
 }
 
@@ -281,7 +303,7 @@ void start() {
 
     print_board();
 
-    tutorial();
+    game_ui();
     g_update_impl();
 }
 

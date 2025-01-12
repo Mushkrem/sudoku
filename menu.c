@@ -146,6 +146,7 @@ int m_confirm_impl() {
 
 	if (buttons[p - 1] == L"Continue") { // Start the actual game
 		menu->remove_labels();
+		menu->position = 0;
 		remove_buttons();
 
 		system("cls");

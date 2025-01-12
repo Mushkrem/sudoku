@@ -20,7 +20,9 @@ int main(int argc, char* argv[]) {
     
     game.difficulty = 1;
     game.points = 0;
-    game.grid = 9;
+    game.grid = 6;
+
+    srand((unsigned int)time(NULL) ^ (long long)(getpid()) << 16);
 
     g_init(&game);
 
