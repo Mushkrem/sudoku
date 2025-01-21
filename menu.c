@@ -248,9 +248,9 @@ void m_draw_labels() {
 			label.position = (COORD){ 2, bounds.height - 1 };
 		}
 
-		else if (Utils.contains(label.string, L"ELAPSED")) {
-			int minutes = game_ref->elapsed / 60;
-			int seconds = game_ref->elapsed % 60;
+		else if (Utils.contains(label.string, L"ELAPSED")) { // Dynamically updates the elapsed time, sadly overflows the buffer
+			int minutes = game_ref->elapsed / 60;			 // - would need a full-on menu redraw every second - but that's just bad. (Will cause flickering)
+			int seconds = game_ref->elapsed % 60;			 // Would need a stack to draw every screen update loop, but that's too finicky to make in C
 
 			if (minutes > 0) {
 				Utils.write_literal(temp_buffer, sizeof(temp_buffer), 
@@ -262,14 +262,14 @@ void m_draw_labels() {
 					L"Time elapsed: \033[9%dm%02d\033[39ms", 
 					screen->get_theme(), game_ref->elapsed);
 			}
-			label.position = (COORD){ bounds.width - Utils.wcslen(temp_buffer), bounds.height - 1 };
+			label.position = (COORD){ bounds.width - Utils.wcslen(temp_buffer), bounds.height - 2 };
 		}
 
 		else if (Utils.contains(label.string, L"MISTAKES")) {
 			Utils.write_literal(temp_buffer, sizeof(temp_buffer), 
 				L"Mistakes: \033[9%dm%d", 
 				screen->get_theme(), game_ref->mistakes);
-			label.position = (COORD){ bounds.width - Utils.wcslen(temp_buffer), bounds.height - 2};
+			label.position = (COORD){ bounds.width - Utils.wcslen(temp_buffer), bounds.height - 1};
 		}
 
 		else if (Utils.contains(label.string, L"CONGRATULATIONS")) {

@@ -48,6 +48,8 @@ static DWORD WINAPI listen_impl(LPVOID lp) {
             default:
                 break;
         }
+
+        Sleep(1); // Slight delay to prevent too frequent updates
     }
 
     return 0;

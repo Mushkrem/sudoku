@@ -185,22 +185,29 @@ void draw_board_numbers(int highlight) {
     for (int column = 0; column < game->grid; column++) {
         for (int row = 0; row < game->grid; row++) {
             int n = board[column][row];
+            short x = x_offset + column + column_spacing;
+            short y = y_offset + row + row_spacing;
+            COORD pos = (COORD){ x, y };
             if (n != 0 && highlight == -1 || n != 0 && count == screen->menu->previous_position) { // draw the number
-                Interface.draw_text((COORD) { x_offset + column + column_spacing, y_offset + row + row_spacing }, L"%x", n);
+                Interface.draw_text(pos, L"%x", n);
                 if (n != solved_board[column][row]) // incorrect number
-                    Interface.draw_text((COORD) { x_offset + column + column_spacing, y_offset + row + row_spacing }, L"\033[41m%x", n);
+                    Interface.draw_text(pos, L"\033[41m%x", n);
             }
 
-            if(n == 0) Interface.draw_text((COORD) { x_offset + column + column_spacing, y_offset + row + row_spacing }, L"\033[90m_");
+            if(n == 0) Interface.draw_text(pos, L"\033[90m_");
 
-            if (count == highlight && n != 0 || (highlight == -1 && count == 0) && n != 0) {// highlight
-                Interface.draw_text((COORD) { x_offset + column + column_spacing, y_offset + row + row_spacing }, L"\033[9%dm%x", screen->get_theme(), n);
-                if(n != solved_board[column][row]) // incorrect number
-                    Interface.draw_text((COORD) { x_offset + column + column_spacing, y_offset + row + row_spacing }, L"\033[101m%x", n);
+            //if (count == highlight && n != 0 || (highlight == -1 && count == 0) && n != 0) {// highlight
+            //    Interface.draw_text((COORD) { x_offset + column + column_spacing, y_offset + row + row_spacing }, L"\033[9%dm%x", screen->get_theme(), n);
+            //    if(n != solved_board[column][row]) // incorrect number
+            //        Interface.draw_text((COORD) { x_offset + column + column_spacing, y_offset + row + row_spacing }, L"\033[101m%x", n);
+            //}
+
+            if (count == highlight) {
+                Interface.draw_text(pos, L"\033[9%dm%x", screen->get_theme(), n);
             }
 
             if(count == highlight && n == 0)
-                Interface.draw_text((COORD) { x_offset + column + column_spacing, y_offset + row + row_spacing }, L"\033[9%dm_", screen->get_theme());
+                Interface.draw_text(pos, L"\033[9%dm_", screen->get_theme());
 
             if ((row + 1) % spacing == 0) row_spacing++; // add additional row spacing after each (nd|rd) column
             count++;
@@ -292,7 +299,7 @@ void game_ui() {
     _screen* screen = get_screen_instance(NULL);
     // They're 'dynamically' updated in the menu.c file, because like, why not.
     wchar_t buffer[128];
-    const wchar_t* labels[] = { L"ESC_QUIT", L"NO_PLACE", L"UP_DOWN", L"RIGHT_LEFT", L"ELAPSED", L"MISTAKES" };
+    const wchar_t* labels[] = { L"ESC_QUIT", L"NO_PLACE", L"UP_DOWN", L"RIGHT_LEFT"/*, L"ELAPSED" overflows the drawing buffer every second*/, L"MISTAKES"};
     
     for (int i = 0; i < sizeof(labels) / sizeof(labels[0]); i++) {
         Utils.write_literal(buffer, sizeof(buffer), labels[i]);
@@ -333,14 +340,15 @@ int select(int n) {
         if (board[row][column] != solved_board[row][column]) {
             board[row][column] = number;
             // Check if it's a wrong number
-            if (number != solved_board[row][column]) {
+            if (number != solved_board[row][column] && number != 0) {
                 game->mistakes++;
-                menu->update();
+                menu->update(); // updates the labels
             }
             else replaced++;
             draw_board_numbers(menu->position);
         }
 
+        // Solved the sudoku board
         if (replaced == removed) {
             menu->remove_labels();
             
@@ -349,6 +357,7 @@ int select(int n) {
             game->total_elapsed = game->elapsed;
             game->score = max(0, 1000 - (10 * game->mistakes) - (0.1 * game->elapsed));
             
+
             wchar_t buffer[128];
             const wchar_t* labels[] = { L"ESC_QUIT", L"CONGRATULATIONS", L"STAT_TIME", L"STAT_MISS", L"STAT_DIFF", L"SCORE"};
             for (int i = 0; i < sizeof(labels) / sizeof(labels[0]); i++) {
@@ -400,7 +409,6 @@ void timer_t() {
         Sleep(1000);
         if (game->reset_timer == 1) game->elapsed = 0;
         game->elapsed++;
-        menu->update();
     }
 }
 
