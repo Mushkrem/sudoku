@@ -68,7 +68,7 @@ int update_impl() {
 			system("cls"); // should handle it in some other way
 			menu->update();
 			if (game_ref->started)
-				game_ref->update();
+				game_ref->update(-1);
 		}
 		Sleep(1);
 	}

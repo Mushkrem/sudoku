@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
     
     game.difficulty = 1;
     game.points = 0;
-    game.grid = 6;
+    game.grid = 9;
 
     srand((unsigned int)time(NULL) ^ (long long)(getpid()) << 16);
 
@@ -32,13 +32,14 @@ int main(int argc, char* argv[]) {
     INPUTS input = get_inputs();
 
     // Creating parallel threads
-    HANDLE listen_t, screen_t;
+    HANDLE listen_t, screen_t, timer_t;
     int thread_number = 1;
 
     screen_t = CreateThread(NULL, 0, screen->update, &thread_number, 0, NULL);
     listen_t = CreateThread(NULL, 0, input.listen, &thread_number, 0, NULL);
+    timer_t = CreateThread(NULL, 0, game.timer_t, &thread_number, 0, NULL);
 
-    if (listen_t == NULL || screen_t == NULL) {
+    if (listen_t == NULL || screen_t == NULL || timer_t == NULL) {
         return EXIT_FAILURE;
     }
 
@@ -52,6 +53,7 @@ int main(int argc, char* argv[]) {
     
     CloseHandle(listen_t);
     CloseHandle(screen_t);
+    CloseHandle(timer_t);
 
 
     return EXIT_SUCCESS;

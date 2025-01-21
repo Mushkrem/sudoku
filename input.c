@@ -21,7 +21,7 @@ static DWORD WINAPI listen_impl(LPVOID lp) {
         c = _getch();
 
         if (iswdigit(c)) // isdigit threw exceptions in some cases
-            screen->select(c - '0');
+            screen->select(c - '0' + 0xFFF);
            
         switch ((int)c) {
             case 72: // up

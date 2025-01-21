@@ -1,5 +1,4 @@
-﻿
-#include "menu.h"
+﻿#include "menu.h"
 #include "utils.h"
 #include "screen.h"
 #include "game.h"
@@ -229,25 +228,96 @@ void m_draw_labels() {
 			label.position = (COORD){ bounds.width / 2 - 6, Y_OFFSET - 2 };
 		}
 
-		if (Utils.contains(label.string, L"ESC_QUIT")) {
+		else if (Utils.contains(label.string, L"ESC_QUIT")) {
 			Utils.write_literal(temp_buffer, sizeof(temp_buffer), L"\033[9%dmESC\033[39m Quit", screen->get_theme());
 			label.position = (COORD){ 2, 0 };
 		}
 
-		if (Utils.contains(label.string, L"NO_PLACE")) {
+		else if (Utils.contains(label.string, L"NO_PLACE")) {
 			Utils.write_literal(temp_buffer, sizeof(temp_buffer), L"\033[9%dm0\033[39m-\033[9%dm%d\033[39m Place", screen->get_theme(), screen->get_theme(), game_ref->grid);
 			label.position = (COORD){ 2, bounds.height - 3 };
 		}
 
-		if (Utils.contains(label.string, L"UP_DOWN")) {
+		else if (Utils.contains(label.string, L"UP_DOWN")) {
 			Utils.write_literal(temp_buffer, sizeof(temp_buffer), L"\033[9%dm↑\033[39m/\033[9%dm↓\033[39m Up/Down", screen->get_theme(), screen->get_theme());
 			label.position = (COORD){ 2, bounds.height - 2 };
 		}
 
-		if (Utils.contains(label.string, L"RIGHT_LEFT")) {
+		else if (Utils.contains(label.string, L"RIGHT_LEFT")) {
 			Utils.write_literal(temp_buffer, sizeof(temp_buffer), L"\033[9%dm→\033[39m/\033[9%dm←\033[39m Right/Left", screen->get_theme(), screen->get_theme());
 			label.position = (COORD){ 2, bounds.height - 1 };
 		}
+
+		else if (Utils.contains(label.string, L"ELAPSED")) {
+			int minutes = game_ref->elapsed / 60;
+			int seconds = game_ref->elapsed % 60;
+
+			if (minutes > 0) {
+				Utils.write_literal(temp_buffer, sizeof(temp_buffer), 
+					L"Time elapsed: \033[9%dm%02d\033[39mm \033[9%dm%02d\033[39ms", 
+					screen->get_theme(), minutes, screen->get_theme(), game_ref->elapsed - minutes * 60);
+			}
+			else {
+				Utils.write_literal(temp_buffer, sizeof(temp_buffer), 
+					L"Time elapsed: \033[9%dm%02d\033[39ms", 
+					screen->get_theme(), game_ref->elapsed);
+			}
+			label.position = (COORD){ bounds.width - Utils.wcslen(temp_buffer), bounds.height - 1 };
+		}
+
+		else if (Utils.contains(label.string, L"MISTAKES")) {
+			Utils.write_literal(temp_buffer, sizeof(temp_buffer), 
+				L"Mistakes: \033[9%dm%d", 
+				screen->get_theme(), game_ref->mistakes);
+			label.position = (COORD){ bounds.width - Utils.wcslen(temp_buffer), bounds.height - 2};
+		}
+
+		else if (Utils.contains(label.string, L"CONGRATULATIONS")) {
+			Utils.write_literal(temp_buffer, sizeof(temp_buffer), 
+				L"\033[7m\033[9%dm C O N G R A T U L A T I O N S ", 
+				screen->get_theme());
+			label.position = (COORD){ (bounds.width / 2) - (Utils.wcslen(temp_buffer) / 2), 4 };
+		}
+
+		else if (Utils.contains(label.string, L"STAT_MISS")) {
+			Utils.write_literal(temp_buffer, sizeof(temp_buffer), 
+				L"Total mistakes: \033[9%dm%d", 
+				screen->get_theme(), game_ref->mistakes);
+			label.position = (COORD){ (bounds.width / 2) - (Utils.wcslen(temp_buffer) / 2), bounds.height - 3 };
+		}
+
+		else if (Utils.contains(label.string, L"STAT_TIME")) {
+			int minutes = game_ref->total_elapsed / 60;
+			Utils.write_literal(temp_buffer, sizeof(temp_buffer),
+				L"Time elapsed: \033[9%dm%02d\033[39mm \033[9%dm%02d\033[39ms",
+				screen->get_theme(), minutes, screen->get_theme(), game_ref->total_elapsed - minutes * 60);
+			label.position = (COORD){ (bounds.width / 2) - (Utils.wcslen(temp_buffer) / 2), bounds.height - 2 };
+		}
+
+		else if (Utils.contains(label.string, L"STAT_DIFF")) {
+			int spacing = (game_ref->grid % 2 == 0) ? 2 : 3;
+			int board_size_y = game_ref->grid + (int)(game_ref->grid / 3) + (3 - spacing);
+			int y_offset = Utils.get_console_height() / 2 - board_size_y / 2;
+
+			int minutes = game_ref->total_elapsed / 60;
+			Utils.write_literal(temp_buffer, sizeof(temp_buffer),
+				L"Difficulty: \033[9%dm%s",
+				screen->get_theme(), game_ref->get_difficulty());
+			label.position = (COORD){ (bounds.width / 2) - (Utils.wcslen(temp_buffer) / 2), y_offset - 2 };
+		}
+
+		else if (Utils.contains(label.string, L"SCORE")) {
+			int spacing = (game_ref->grid % 2 == 0) ? 2 : 3;
+			int board_size_y = game_ref->grid + (int)(game_ref->grid / 3) + (3 - spacing);
+			int y_offset = Utils.get_console_height() / 2 - board_size_y / 2;
+
+			Utils.write_literal(temp_buffer, sizeof(temp_buffer),
+				L"Score: \033[9%dm%d",
+				screen->get_theme(), game_ref->score);
+			label.position = (COORD){ (bounds.width / 2) - (Utils.wcslen(temp_buffer) / 2), y_offset + board_size_y + 2 };
+		}
+
+		else Utils.write_literal(temp_buffer, sizeof(temp_buffer), label.string);
 
 		label.string = _wcsdup(temp_buffer);
 
@@ -265,9 +335,12 @@ int m_update_impl() {
 
 	int p = instance->previous_position;
 	int n = instance->position;
+	
+	m_draw_labels(); // drawing all other short texts
+
+	if (game_ref->started) return EXIT_SUCCESS;
 
 	m_draw_buttons(); // drawing buttons before drawing cursor, because some buttons are dynamic and their length may change
-	m_draw_labels(); // drawing all other short texts
 
 	if (p <= button_count) { // Removing the previous cursor
 		Interface.draw_text((COORD) { bounds.width / 2 + Utils.wcslen(buttons[p - 1]) / 2 + 5, (bounds.height / 2) - 4 + (p) * 2 }, L" ");

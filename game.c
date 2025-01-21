@@ -18,6 +18,9 @@ int solved_board[9][9];
 
 int board[9][9] = { 0 };
 
+int removed = 0;
+int replaced = 0;
+
 void shuffle(int* array, int n) {
     for (int i = 0; i < n - 1; i++) {
         int j = i + rand() / (RAND_MAX / (n - i) + 1);
@@ -43,16 +46,16 @@ void populate_board(int* array, int position) {
     }
 }
 
-int is_safe(int column, int row, int n) {
+int is_safe(int t_board[9][9], int column, int row, int n) {
     // check vertical
     for (int y = 0; y < game->grid; y++) {
-        if (solved_board[column][y] == n)
+        if (t_board[column][y] == n)
             return 0;
     }
 
     //check horizontal
     for (int x = 0; x < game->grid; x++) {
-        if (solved_board[x][row] == n)
+        if (t_board[x][row] == n)
             return 0;
     }
 
@@ -62,7 +65,7 @@ int is_safe(int column, int row, int n) {
 
     for (int i = y_bound - (game->grid / 3); i < y_bound; i++) {
         for (int j = x_bound - 3; j < x_bound; j++) {
-            if (n == solved_board[j][i])
+            if (n == t_board[j][i])
                 return 0;
         }
     }
@@ -84,7 +87,7 @@ int solve_sudoku(int row, int column) {
     }
 
     for (int num = 1; num <= game->grid; num++) {
-        if (is_safe(row, column, num)) {
+        if (is_safe(solved_board, row, column, num)) {
             solved_board[row][column] = num;
             if (solve_sudoku(row, column + 1)) {
                 return 1;
@@ -96,26 +99,67 @@ int solve_sudoku(int row, int column) {
     return 0;
 }
 
+int is_unique(int row, int column) {
+    int count = 0;
+    for (int num = 1; num <= game->grid; num++) {
+        if (is_safe(board, row, column, num)) count++;
+        if (count > 1) break;
+    }
+    return (count == 1) ? 1 : 0;
+}
+
+void remove_numbers(int numbers_to_remove) {
+    int count = 0;
+    for (int i = 0; i < numbers_to_remove; i++) {
+        int row = rand() % game->grid;
+        int column = rand() % game->grid;
+
+        int temp = board[row][column];
+        board[row][column] = 0;
+
+        int unique = is_unique(row, column);
+
+        if (unique != 1) {
+            board[row][column] = temp;
+        }
+        
+        if (board[row][column] != temp) count++;
+    }
+    removed = count;
+}
+
+void copy_board() {
+    for (int i = 0; i < 9; i++) {
+        for (int j = 0; j < 9; j++) {
+            board[i][j] = solved_board[i][j];
+        }
+    }
+}
+
 void generate_board() {
     // pool of numbers to choose from
     int numbers_stack[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
     memset(solved_board, 0, sizeof(solved_board));
 
-    // shuffle takes into an account the size of grids, so if its 6, only the first 6 spaces in the array will be shuffled.
-    //shuffle(numbers_stack, 9);
-
-    // populate board (array, int) where the int corresponds to a square inside the full grid. grid[9x9] is composed of 9 squares sized 3x3
-    // is later used for backtracking
+    // populating the board in squares that aren't connected vertically or horizontally with each other
     int spacing = (game->grid % 2 == 0) ? 2 : 3;
     for (int i = 1; i <= game->grid; i += ((game->grid/spacing) + 1)) {
-        Utils.debug(L"Heyulo %d", game->grid);
+        // shuffle takes into an account the size of grids, so if its 6, only the first 6 numbers in the array will be shuffled.
         shuffle(numbers_stack, game->grid);
+        // populate board (array, int) where the int corresponds to a square inside the full grid. grid[9x9] is composed of 9 squares sized 3x3
+        // is later used for backtracking
         populate_board(numbers_stack, i);
     }
-    //populate_board(numbers_stack, random_square);
 
     // fill the rest of the board using backtracking - filling all zeroes according to sudoku rules.
     solve_sudoku(0, 0);
+
+    //copy the solved board to the actual board that'll be shown on screen
+    copy_board();
+
+    // will attempt to remove X numbers.
+    // but will remove less if the solution isn't unique.
+    remove_numbers(min(game->difficulty * game->grid * 3, game->grid * game->grid));
 }
 
 void draw_board_numbers(int highlight) {
@@ -140,11 +184,24 @@ void draw_board_numbers(int highlight) {
     int count = 0;
     for (int column = 0; column < game->grid; column++) {
         for (int row = 0; row < game->grid; row++) {
-            int n = solved_board[column][row];
-            if (n != 0 && highlight == -1 || n != 0 && count == screen->menu->previous_position) {
+            int n = board[column][row];
+            if (n != 0 && highlight == -1 || n != 0 && count == screen->menu->previous_position) { // draw the number
                 Interface.draw_text((COORD) { x_offset + column + column_spacing, y_offset + row + row_spacing }, L"%x", n);
+                if (n != solved_board[column][row]) // incorrect number
+                    Interface.draw_text((COORD) { x_offset + column + column_spacing, y_offset + row + row_spacing }, L"\033[41m%x", n);
             }
-            if (count == highlight || (highlight == -1 && count == 0)) Interface.draw_text((COORD) { x_offset + column + column_spacing, y_offset + row + row_spacing }, L"\033[9%dm%x", screen->get_theme(), n);
+
+            if(n == 0) Interface.draw_text((COORD) { x_offset + column + column_spacing, y_offset + row + row_spacing }, L"\033[90m_");
+
+            if (count == highlight && n != 0 || (highlight == -1 && count == 0) && n != 0) {// highlight
+                Interface.draw_text((COORD) { x_offset + column + column_spacing, y_offset + row + row_spacing }, L"\033[9%dm%x", screen->get_theme(), n);
+                if(n != solved_board[column][row]) // incorrect number
+                    Interface.draw_text((COORD) { x_offset + column + column_spacing, y_offset + row + row_spacing }, L"\033[101m%x", n);
+            }
+
+            if(count == highlight && n == 0)
+                Interface.draw_text((COORD) { x_offset + column + column_spacing, y_offset + row + row_spacing }, L"\033[9%dm_", screen->get_theme());
+
             if ((row + 1) % spacing == 0) row_spacing++; // add additional row spacing after each (nd|rd) column
             count++;
         }
@@ -223,28 +280,24 @@ wchar_t* get_grid() {
     return result;
 }
 
-void g_update_impl() {
-    draw_board_numbers(-1);
+void g_update_impl(int from_selection) {
+    _menu* menu = get_menu_instance(DEFAULT_BOUNDS);
+    int highlight = (from_selection != -1) ? menu->position : -1;
+    draw_board_numbers(highlight);
     draw_board_grid();
 }
 
 void game_ui() {
     _menu* menu = get_menu_instance(DEFAULT_BOUNDS);
     _screen* screen = get_screen_instance(NULL);
-
+    // They're 'dynamically' updated in the menu.c file, because like, why not.
     wchar_t buffer[128];
-    Utils.write_literal(buffer, sizeof(buffer), L"ESC_QUIT");
-    menu->update_label(&menu->labels[0], buffer, (COORD) { (short)NULL, (short)NULL });
-
-    Utils.write_literal(buffer, sizeof(buffer), L"NO_PLACE");
-    menu->update_label(&menu->labels[1], buffer, (COORD) { (short)NULL, (short)NULL });
-
-    Utils.write_literal(buffer, sizeof(buffer), L"UP_DOWN");
-    menu->update_label(&menu->labels[2], buffer, (COORD) { (short)NULL, (short)NULL });
-
-    Utils.write_literal(buffer, sizeof(buffer), L"RIGHT_LEFT");
-    menu->update_label(&menu->labels[3], buffer, (COORD) { (short)NULL, (short)NULL });
-
+    const wchar_t* labels[] = { L"ESC_QUIT", L"NO_PLACE", L"UP_DOWN", L"RIGHT_LEFT", L"ELAPSED", L"MISTAKES" };
+    
+    for (int i = 0; i < sizeof(labels) / sizeof(labels[0]); i++) {
+        Utils.write_literal(buffer, sizeof(buffer), labels[i]);
+        menu->update_label(&menu->labels[i], buffer, (COORD) { (short)NULL, (short)NULL });
+    }
 }
 
 void print_board() {
@@ -267,6 +320,51 @@ void print_board() {
 int select(int n) {
     _menu* menu = get_menu_instance(DEFAULT_BOUNDS);
     int p = menu->position;
+
+    // already finished the game dont click anything please
+    if (replaced == -1) return EXIT_SUCCESS;
+
+    if (n >= 0xFFF) {
+        int number = n - 0xFFF;
+        if (number > game->grid) return EXIT_FAILURE;
+        int row = menu->position / game->grid;
+        int column = menu->position % game->grid;
+
+        if (board[row][column] != solved_board[row][column]) {
+            board[row][column] = number;
+            // Check if it's a wrong number
+            if (number != solved_board[row][column]) {
+                game->mistakes++;
+                menu->update();
+            }
+            else replaced++;
+            draw_board_numbers(menu->position);
+        }
+
+        if (replaced == removed) {
+            menu->remove_labels();
+            
+            system("cls");
+
+            game->total_elapsed = game->elapsed;
+            game->score = max(0, 1000 - (10 * game->mistakes) - (0.1 * game->elapsed));
+            
+            wchar_t buffer[128];
+            const wchar_t* labels[] = { L"ESC_QUIT", L"CONGRATULATIONS", L"STAT_TIME", L"STAT_MISS", L"STAT_DIFF", L"SCORE"};
+            for (int i = 0; i < sizeof(labels) / sizeof(labels[0]); i++) {
+                Utils.write_literal(buffer, sizeof(buffer), labels[i]);
+                menu->update_label(&menu->labels[i], buffer, (COORD) { (short)NULL, (short)NULL });
+            }
+
+            menu->position = -1;
+
+            g_update_impl(-1);
+
+            replaced = -1;
+        }
+
+        return EXIT_SUCCESS;
+    }
 
     if (n < 0) {
         return EXIT_FAILURE;
@@ -296,15 +394,32 @@ int select(int n) {
     return EXIT_SUCCESS;
 }
 
+void timer_t() {
+    _menu* menu = get_menu_instance(DEFAULT_BOUNDS);
+    while (1 == 1) {
+        Sleep(1000);
+        if (game->reset_timer == 1) game->elapsed = 0;
+        game->elapsed++;
+        menu->update();
+    }
+}
+
 void start() {
     game->started = 1;
+    game->mistakes = 0;
+    game->elapsed = 0;
+    replaced = 0;
+
+    time_t start, end;
 
     generate_board();
 
-    print_board();
+    time(&start);
+
+    _screen* screen = get_screen_instance(NULL);
 
     game_ui();
-    g_update_impl();
+    g_update_impl(-1);
 }
 
 void stop() {
@@ -321,6 +436,7 @@ void g_init(_game* g) {
     game->set_grid = set_grid;
     game->start = start;
     game->stop = stop;
+    game->timer_t = timer_t;
 
     game->select = select;
 
