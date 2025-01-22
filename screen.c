@@ -15,6 +15,7 @@ _screen* get_screen_instance(_game* game_ref);
 _bounds bounds;
 _game* game_ref;
 int _is_legacy = NULL;
+int _should_draw_empty_cells = TRUE;
 int _theme = 4;
 
 _game* get_game_ref() {
@@ -29,6 +30,16 @@ void set_theme(int n) {
 	if (n > 7) n = 0;
 	if (n < 0) n = 7;
 	_theme = n;
+}
+
+int get_draw_empty() {
+	return _should_draw_empty_cells;
+}
+
+void set_draw_empty(int n) {
+	if (n > 1) n = 0;
+	if (n < 0) n = 1;
+	_should_draw_empty_cells = n;
 }
 
 int is_legacy_console() {
@@ -105,6 +116,8 @@ _screen* get_screen_instance(_game* ref) {
 	instance->is_legacy = is_legacy_console;
 	instance->get_theme = get_theme;
 	instance->set_theme = set_theme;
+	instance->get_draw_empty = get_draw_empty;
+	instance->set_draw_empty = set_draw_empty;
 	instance->get_game_ref = get_game_ref;
 	instance->menu = get_menu_instance(DEFAULT_BOUNDS);
 	return instance;

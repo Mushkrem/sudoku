@@ -188,26 +188,21 @@ void draw_board_numbers(int highlight) {
             short x = x_offset + column + column_spacing;
             short y = y_offset + row + row_spacing;
             COORD pos = (COORD){ x, y };
+            wchar_t* underscore = screen->get_draw_empty() ? L"_" : L"\033[4m ";
+
             if (n != 0 && highlight == -1 || n != 0 && count == screen->menu->previous_position) { // draw the number
                 Interface.draw_text(pos, L"%x", n);
                 if (n != solved_board[column][row]) // incorrect number
                     Interface.draw_text(pos, L"\033[41m%x", n);
             }
 
-            if(n == 0) Interface.draw_text(pos, L"\033[90m_");
+            if (n == 0) Interface.draw_text(pos, L"\033[90m%s", screen->get_draw_empty() ? L"_" : L" "); // draw underscore
 
-            //if (count == highlight && n != 0 || (highlight == -1 && count == 0) && n != 0) {// highlight
-            //    Interface.draw_text((COORD) { x_offset + column + column_spacing, y_offset + row + row_spacing }, L"\033[9%dm%x", screen->get_theme(), n);
-            //    if(n != solved_board[column][row]) // incorrect number
-            //        Interface.draw_text((COORD) { x_offset + column + column_spacing, y_offset + row + row_spacing }, L"\033[101m%x", n);
-            //}
-
-            if (count == highlight) {
-                Interface.draw_text(pos, L"\033[9%dm%x", screen->get_theme(), n);
+            if (count == highlight || (highlight + replaced < 0 && count == 0)) { // highlight selected cells
+                Interface.draw_text(pos, L"\033[9%dm%s%x", screen->get_theme(), screen->get_draw_empty() ? L"" : L"\033[4m", n);
+                if(n != solved_board[column][row]) Interface.draw_text(pos, L"\033[101m%x", n); // highlight incorrect number
+                if (n == 0) Interface.draw_text(pos, L"\033[9%dm%s", screen->get_theme(), screen->get_draw_empty() ? L"_" : L"\033[4m "); // highlight underscore
             }
-
-            if(count == highlight && n == 0)
-                Interface.draw_text(pos, L"\033[9%dm_", screen->get_theme());
 
             if ((row + 1) % spacing == 0) row_spacing++; // add additional row spacing after each (nd|rd) column
             count++;
@@ -344,7 +339,7 @@ int select(int n) {
                 game->mistakes++;
                 menu->update(); // updates the labels
             }
-            else replaced++;
+            else if(number == solved_board[row][column] && number != 0) replaced++;
             draw_board_numbers(menu->position);
         }
 
@@ -355,7 +350,7 @@ int select(int n) {
             system("cls");
 
             game->total_elapsed = game->elapsed;
-            game->score = max(0, 1000 - (10 * game->mistakes) - (0.1 * game->elapsed));
+            game->score = max(0, 1000 - (10 * game->mistakes) - (1.5 * game->elapsed));
             
 
             wchar_t buffer[128];

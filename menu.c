@@ -91,6 +91,7 @@ int m_roll_impl(int n) {
 	if (direction == 0) return !EXIT_FAILURE;
 
 	if (Utils.contains(buttons[p - 1], L"Theme")) screen->set_theme(screen->get_theme() + direction);
+	if (Utils.contains(buttons[p - 1], L"Draw")) screen->set_draw_empty(screen->get_draw_empty() + direction);
 	if (Utils.contains(buttons[p - 1], L"Grid")) game_ref->set_grid(game_ref->grid + direction * 3);
 	if (Utils.contains(buttons[p - 1], L"Difficulty")) game_ref->set_difficulty(game_ref->difficulty + direction);
 	
@@ -157,7 +158,7 @@ int m_confirm_impl() {
 	if (buttons[p - 1] == L"Options") { // Create the 'Options' menu
 		instance->position = 1;
 		remove_buttons();
-		add_buttons(L"[%s] Theme", L"", L"", L"Back", NULL);
+		add_buttons(L"[%s] Theme", L"[%s] Draw", L"", L"Back", NULL);
 	}
 
 	if (buttons[p - 1] == L"Play") { // Create the 'Play' menu
@@ -188,6 +189,9 @@ void m_draw_buttons() {
 
 			if (Utils.contains(buttons[i], L"Theme"))
 				Utils.write_literal(temp_buffer, sizeof(temp_buffer), L"[\033[9%dm%d\033[39m] Theme", screen->get_theme(), screen->get_theme());
+
+			if (Utils.contains(buttons[i], L"Draw"))
+				Utils.write_literal(temp_buffer, sizeof(temp_buffer), L"  [\033[9%dm%s\033[39m] Draw gaps  ", screen->get_theme(), screen->get_draw_empty() == 1 ? L"Yes" : L"No");
 
 			if (Utils.contains(buttons[i], L"Difficulty"))
 				Utils.write_literal(temp_buffer, sizeof(temp_buffer), L"  [\033[9%dm%s\033[39m] Difficulty  ", screen->get_theme(), game_ref->get_difficulty());

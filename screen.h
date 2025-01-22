@@ -14,8 +14,10 @@ typedef struct _screen {
     int (*confirm)();
     int (*is_legacy)();
     int (*get_theme)();
+    int (*get_draw_empty)();
     int (*select)(int n);
     void (*set_theme)(int n);
+    void (*set_draw_empty)(int n);
     _game* (*get_game_ref)();
 
     int _is_legacy;
