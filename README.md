@@ -6,10 +6,9 @@ Project made for a school assignment
 ## Game Screenshots
 
 <div style="display: flex; justify-content: space-between;">
-  <img src="images/menu.png" alt="Main menu" width="225">
-  <img src="images/9x9.png" alt="9x9 Board" width="225" style="margin-right: 10px;">
-  <img src="images/6x6solved.png" alt="6x6 Solved Board" width="225" style="margin-right: 10px;">
-  <img src="images/3x3.png" alt="3x3 Board" width="225">
+  <img src="images/menu.png" alt="Main menu" width="250">
+  <img src="images/9x9.png" alt="9x9 Board" width="250" style="margin-right: 10px;">
+  <img src="images/6x6solved.png" alt="6x6 Solved Board" width="250" style="margin-right: 10px;">
 </div>
 
 ## How to Build the project
