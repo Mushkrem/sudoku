@@ -315,7 +315,6 @@ void print_board() {
                 Utils.write_literal(buffer, sizeof(buffer), L" %d ", solved_board[j][i]);
             }
         }
-        Utils.debug(buffer);
     }
 }
 
