@@ -1,5 +1,7 @@
 #pragma once
 
+#include <conio.h>
+
 #include "input.h"
 #include "screen.h"
 #include "game.h"
