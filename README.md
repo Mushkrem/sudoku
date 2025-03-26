@@ -1,7 +1,6 @@
 # Console Sudoku Project
 
-## General Description
-Project made for a school assignment
+A project made for my school's C assignment
 
 ## Game Screenshots
 
@@ -14,7 +13,7 @@ Project made for a school assignment
 ## How to Build the project
 1. Clone the repository in Visual Studio:
    - `git clone https://github.com/Mushkrem/sudoku.git`
-2. Build the solution inside Visual Studio (Release x64):
+2. Build the solution inside Visual Studio (Release x64)
 3. The built executable should be inside `.\x64\Release\sudoku.exe`
 
 ## Running the latest released executable
