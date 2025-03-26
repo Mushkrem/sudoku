@@ -51,4 +51,4 @@ jobs:
 
     - name: Verify
       run: | 
-        dir . /s
+        Get-ChildItem . -Recurse
