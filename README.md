@@ -19,7 +19,7 @@ Project made for a school assignment
 
 ## Running the latest released executable
 1. Download the latest executable from [Releases](https://github.com/Mushkrem/sudoku/releases/latest)
-2. Simplu run it on any Windows operating system
+2. Simply run it on any Windows operating system
 
 The project should be compatible with legacy consoles, ensuring correct rendering. However it was written for the latest [Windows Terminal](https://apps.microsoft.com/detail/9n0dx20hk701?hl=en-US&gl=US) application.
 
