@@ -56,16 +56,16 @@ void write_to_buffer_literally(wchar_t* buffer, size_t size, const wchar_t* stri
 	va_end(args);
 }
 
-void output_formatted_debug(const wchar_t* string, ...) {
-	wchar_t buffer[2048];
-	va_list args;
-	va_start(args, string);
-	vswprintf(buffer, sizeof(buffer) / sizeof(wchar_t), string, args);
-	va_end(args);
+// void output_formatted_debug(const wchar_t* string, ...) {
+// 	wchar_t buffer[2048];
+// 	va_list args;
+// 	va_start(args, string);
+// 	vswprintf(buffer, sizeof(buffer) / sizeof(wchar_t), string, args);
+// 	va_end(args);
 
-	append_to_buffer(buffer, sizeof(buffer), L"\n");
-	OutputDebugString(buffer);
-}
+// 	append_to_buffer(buffer, sizeof(buffer), L"\n");
+// 	OutputDebugString(buffer);
+// }
 
 void write_to_console(const wchar_t* buffer, COORD position) {
 	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -116,7 +116,7 @@ int get_console_height() {
 }
 
 Utility Utils = {
-	.debug = output_formatted_debug,
+	// .debug = output_formatted_debug,
 	.write = write_to_buffer,
 	.write_literal = write_to_buffer_literally,
 	.print = write_to_console,
