@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: C CI
 
 on:
   push:
@@ -19,18 +19,18 @@ jobs:
         echo "Current directory: $PWD"
         dir
         echo "PATH: $PATH"
-        g++ --version
+        gcc --version
 
     - name: Build project
       run: |
-        g++ -c utils.c -o utils.o
-        g++ -c interface.c -o interface.o
-        g++ -c screen.c -o screen.o
-        g++ -c game.c -o game.o
-        g++ -c input.c -o input.o
-        g++ -c menu.c -o menu.o
-        g++ -c sudoku.c -o sudoku.o
-        g++ -static-libgcc -static-libstdc++ -static -o bgm utils.o interface.o screen.o game.o input.o menu.o sudoku.o
+        gcc -c utils.c -o utils.o
+        gcc -c interface.c -o interface.o
+        gcc -c screen.c -o screen.o
+        gcc -c game.c -o game.o
+        gcc -c input.c -o input.o
+        gcc -c menu.c -o menu.o
+        gcc -c sudoku.c -o sudoku.o
+        gcc -static-libgcc -static-libstdc++ -static -o bgm utils.o interface.o screen.o game.o input.o menu.o sudoku.o
    
     - name: Archive artifact
       uses: actions/upload-artifact@v4
