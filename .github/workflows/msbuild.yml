@@ -51,4 +51,4 @@ jobs:
 
     - name: Verify
       run: | 
-        dir ./sudoku/x64/Release
+        dir /s
