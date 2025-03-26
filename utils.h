@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 typedef struct {
-	void (*debug)(const wchar_t* string, ...);
+	// void (*debug)(const wchar_t* string, ...);
 	void (*write)(wchar_t* buffer, size_t size, const wchar_t* string, va_list args);
 	void (*write_literal)(wchar_t* buffer, size_t size, const wchar_t* string, ...);
 	int (*contains)(wchar_t* first, wchar_t* second);
