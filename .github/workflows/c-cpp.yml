@@ -12,7 +12,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Debug info
       run: |
@@ -33,7 +33,7 @@ jobs:
         g++ -static-libgcc -static-libstdc++ -static -o bgm sudoku.o utils.o input.o screen.o interface.o menu.o game.o
    
     - name: Archive artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: artifact
         path: ./bgm.exe
