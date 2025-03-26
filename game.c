@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include <time.h>
+
 #include "game.h"
 #include "utils.h"
 #include "interface.h"
