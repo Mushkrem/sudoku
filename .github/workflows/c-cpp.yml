@@ -23,14 +23,14 @@ jobs:
 
     - name: Build project
       run: |
-        g++ -c sudoku.c -o sudoku.o
         g++ -c utils.c -o utils.o
-        g++ -c input.c -o input.o
-        g++ -c screen.c -o screen.o
         g++ -c interface.c -o interface.o
-        g++ -c menu.c -o menu.o
+        g++ -c screen.c -o screen.o
         g++ -c game.c -o game.o
-        g++ -static-libgcc -static-libstdc++ -static -o bgm sudoku.o utils.o input.o screen.o interface.o menu.o game.o
+        g++ -c input.c -o input.o
+        g++ -c menu.c -o menu.o
+        g++ -c sudoku.c -o sudoku.o
+        g++ -static-libgcc -static-libstdc++ -static -o bgm utils.o interface.o screen.o game.o input.o menu.o sudoku.o
    
     - name: Archive artifact
       uses: actions/upload-artifact@v4
